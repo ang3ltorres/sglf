@@ -1,0 +1,1 @@
+g++ ./src/*.cpp ./src/sglf/*.cpp -Iinclude -o ./build/sglf.exe -I"C:/vcpkg/installed/x64-mingw-dynamic/include" -L"C:/vcpkg/installed/x64-mingw-dynamic/lib" -lglew32 -lglfw3 -lvorbisfile -lvorbis -logg -lopengl32 -Os -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -s -Wl,--gc-sections
