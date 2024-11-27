@@ -1,232 +1,368 @@
 #include "sglf/sglf.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+// WINAPI
+#include <objbase.h>
+
+// STD
 #include <cstdio>
+
+// OGG VORBIS
+#include <ogg/ogg.h>
+#include <vorbis/vorbisfile.h>
+
+// GLM
 #include <glm/gtc/type_ptr.hpp>
+
 using namespace glm;
+using namespace sglf;
 
-// *General DCL
-struct Vertex
-{
-	float position[2];
-	float uv[2];
-};
+#pragma region // &WGL EXTENSIONNS
 
-static const Vertex vertices[] = {
-	{ { 0.0f, 0.0f }, { 0.0f, 0.0f } },
-	{ { 1.0f, 0.0f }, { 1.0f, 0.0f } },
-	{ { 0.0f, 1.0f }, { 0.0f, 1.0f } },
-	{ { 1.0f, 1.0f }, { 1.0f, 1.0f } }
-};
+PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
-static const unsigned int indices[] = {
-	0, 1, 2,
-	1, 2, 3,
-};
+#pragma endregion // &WGL EXTENSIONNS
 
-glm::vec4 Color::getVec4()
+#pragma region // &OPENGL EXTENSIONNS
+
+PFNGLCREATEBUFFERSPROC glCreateBuffers;
+PFNGLNAMEDBUFFERSTORAGEPROC glNamedBufferStorage;
+PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+PFNGLCREATEVERTEXARRAYSPROC glCreateVertexArrays;
+PFNGLVERTEXARRAYATTRIBBINDINGPROC glVertexArrayAttribBinding;
+PFNGLVERTEXARRAYVERTEXBUFFERPROC glVertexArrayVertexBuffer;
+PFNGLVERTEXARRAYATTRIBFORMATPROC glVertexArrayAttribFormat;
+PFNGLENABLEVERTEXARRAYATTRIBPROC glEnableVertexArrayAttrib;
+PFNGLGETPROGRAMIVPROC glGetProgramiv;
+PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+PFNGLCREATETEXTURESPROC glCreateTextures;
+PFNGLTEXTUREPARAMETERIPROC glTextureParameteri;
+PFNGLTEXTURESTORAGE2DPROC glTextureStorage2D;
+PFNGLTEXTURESUBIMAGE2DPROC glTextureSubImage2D;
+PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
+PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+PFNGLCREATESHADERPROC glCreateShader;
+PFNGLSHADERSOURCEPROC glShaderSource;
+PFNGLCOMPILESHADERPROC glCompileShader;
+PFNGLGETSHADERIVPROC glGetShaderiv;
+PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+PFNGLCREATEPROGRAMPROC glCreateProgram;
+PFNGLATTACHSHADERPROC glAttachShader;
+PFNGLLINKPROGRAMPROC glLinkProgram;
+PFNGLDELETESHADERPROC glDeleteShader;
+PFNGLDELETEPROGRAMPROC glDeleteProgram;
+PFNGLUSEPROGRAMPROC glUseProgram;
+PFNGLCLEARTEXSUBIMAGEPROC glClearTexSubImage;
+PFNGLVERTEXARRAYELEMENTBUFFERPROC glVertexArrayElementBuffer;
+PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+PFNGLDELETEBUFFERSPROC glDeleteBuffers;
+PFNGLNAMEDBUFFERDATAPROC glNamedBufferData;
+PFNGLBUFFERSUBDATAPROC glBufferSubData;
+PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+PFNGLCREATEFRAMEBUFFERSPROC glCreateFramebuffers;
+PFNGLNAMEDFRAMEBUFFERTEXTUREPROC glNamedFramebufferTexture;
+PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC glNamedFramebufferDrawBuffers;
+PFNGLDRAWELEMENTSINSTANCEDPROC glDrawElementsInstanced;
+PFNGLACTIVETEXTUREPROC glActiveTexture;
+
+#pragma endregion // &OPENGL EXTENSIONNS
+
+#pragma region COLOR
+
+vec4 Color::getVec4() const
 {
 	return glm::vec4({r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f});
 }
 
-GLFWwindow *SGLF::window;
-unsigned int SGLF::width;
-unsigned int SGLF::height;
-Shader *SGLF::currentShader;
-GLuint SGLF::currentVAO;
-GLuint SGLF::currentTexture;
-Camera *SGLF::currentCamera;
-Camera *SGLF::defaultCamera;
-float SGLF::fps;
-float SGLF::delta;
-bool SGLF::forceClose;
+#pragma endregion COLOR
 
-// *Input DCL
-bool Input::escape_DOWN;
-bool Input::up_DOWN;
-bool Input::left_DOWN;
-bool Input::down_DOWN;
-bool Input::right_DOWN;
+#pragma region WINDOW
 
-bool Input::escape_PRESSED;
-bool Input::up_PRESSED;
-bool Input::left_PRESSED;
-bool Input::down_PRESSED;
-bool Input::right_PRESSED;
+bool Window::forceClose;
+void (*Window::resizedCallback)(unsigned int width, unsigned int height);
 
-bool Input::escape_RELEASED;
-bool Input::up_RELEASED;
-bool Input::left_RELEASED;
-bool Input::down_RELEASED;
-bool Input::right_RELEASED;
+WNDCLASSEXA Window::windowClass;
+HWND Window::hwnd;
+MSG Window::msg;
+LONG_PTR Window::savedStyle;
+RECT Window::savedRect;
 
-static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
-	if (action == GLFW_PRESS)
+unsigned int Window::width;
+unsigned int Window::height;
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{	
+	switch (uMsg)
 	{
-		switch (key)
+		case WM_CLOSE:
 		{
-			case GLFW_KEY_ESCAPE: Input::escape_DOWN = true; Input::escape_PRESSED = true; break;
-			case GLFW_KEY_UP:     Input::up_DOWN     = true; Input::up_PRESSED     = true; break;
-			case GLFW_KEY_LEFT:   Input::left_DOWN   = true; Input::left_PRESSED   = true; break;
-			case GLFW_KEY_DOWN:   Input::down_DOWN   = true; Input::down_PRESSED   = true; break;
-			case GLFW_KEY_RIGHT:  Input::right_DOWN  = true; Input::right_PRESSED  = true; break;
+			DestroyWindow(hwnd);
+			return 0;
+		}
+
+		case WM_DESTROY:
+		{
+			PostQuitMessage(0);
+			return 0;
+		}
+
+		case WM_SIZE:
+		{
+			RECT rc;
+
+			GetClientRect(Window::hwnd, &rc);
+
+			Window::width = rc.right - rc.left;
+			Window::height = rc.bottom - rc.top;
+
+			if (Window::resizedCallback)
+				Window::resizedCallback(Window::width, Window::height);
+
+			return 0;
+		}
+
+		case WM_KEYDOWN:
+		{
+			Input::keyDown(wParam);
+			return 0;
+		}
+
+		case WM_KEYUP:
+		{
+			Input::keyUp(wParam);
+			return 0;
 		}
 	}
-	else if (action == GLFW_RELEASE)
-	{
-		switch (key)
-		{
-			case GLFW_KEY_ESCAPE: Input::escape_DOWN = false; Input::escape_RELEASED = true; break;
-			case GLFW_KEY_UP:     Input::up_DOWN     = false; Input::up_RELEASED     = true; break;
-			case GLFW_KEY_LEFT:   Input::left_DOWN   = false; Input::left_RELEASED   = true; break;
-			case GLFW_KEY_DOWN:   Input::down_DOWN   = false; Input::down_RELEASED   = true; break;
-			case GLFW_KEY_RIGHT:  Input::right_DOWN  = false; Input::right_RELEASED  = true; break;
-		}
-	}
+
+	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-// *Shader DCL
-char Shader::infoLog[512];
-
-// *Texture DCL
-Shader *Texture::shader;
-GLuint Texture::VAO;
-GLuint Texture::VBO;
-GLuint Texture::EBO;
-
-// *Graphics IMP
-void SGLF::initialize(unsigned int width, unsigned int height, const char *windowName)
+void Window::initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow)
 {
-	SGLF::width = width;
-	SGLF::height = height;
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+	Window::forceClose = false;
+	Window::resizedCallback = nullptr;
+	Window::width = width;
+	Window::height = height;
+
+	ZeroMemory(&windowClass, sizeof(WNDCLASSEXA));
+	windowClass.cbSize = sizeof(WNDCLASSEXA);
+	windowClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+	windowClass.hInstance = hInstance;
+	windowClass.lpfnWndProc = WindowProc;
+	windowClass.lpszClassName = "MainWindow";
+	windowClass.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+	windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	windowClass.style = CS_HREDRAW | CS_VREDRAW;
+
+	RegisterClassExA(&windowClass);
+	RECT rect = { 0, 0, {Window::width}, {Window::height} };
+	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW);
+
+	// Calculate window position to center it on the screen
+	int screenWidth  = GetSystemMetrics(SM_CXSCREEN);
+	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+	int posX = (screenWidth - (rect.right - rect.left)) / 2;
+	int posY = (screenHeight - (rect.bottom - rect.top)) / 2;
+
+	Window::hwnd = CreateWindowExA(
+		WS_EX_OVERLAPPEDWINDOW, windowClass.lpszClassName, title, WS_OVERLAPPEDWINDOW,
+		posX, posY, rect.right - rect.left, rect.bottom - rect.top,
+		nullptr, nullptr, hInstance, nullptr
+	);
 	
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
-	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+	ShowWindow(Window::hwnd, SW_NORMAL);
+	SetForegroundWindow(Window::hwnd);
+	SetActiveWindow(Window::hwnd);
+	SetFocus(Window::hwnd);
 
-	SGLF::window = glfwCreateWindow(width, height, windowName, nullptr, nullptr);
-	glfwMakeContextCurrent(SGLF::window);
-	glewInit();
-	glfwSwapInterval(1);
-	glfwSetKeyCallback(SGLF::window, keyCallback);
+	savedStyle = GetWindowLongPtr(hwnd, GWL_STYLE);
+	GetWindowRect(hwnd, &savedRect);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_STENCIL_TEST);
-	glDepthMask(GL_FALSE);
-	glActiveTexture(GL_TEXTURE0);
-
-	SGLF::fps = 0.0f;
-	SGLF::delta = 0.0f;
-	SGLF::currentShader = nullptr;
-	SGLF::currentVAO = 0;
-	SGLF::currentTexture = 0;
-	SGLF::defaultCamera = new Camera(width, height);
-	SGLF::currentCamera = SGLF::defaultCamera;
-	SGLF::setRenderTexture();
-
-	Texture::initialize();
+	ZeroMemory(&Window::msg, sizeof(MSG));
+	Window::msg.message = WM_NULL;
 }
 
-void SGLF::finalize()
+void Window::finalize()
 {
-	Texture::finalize();
-	glfwTerminate();
+	UnregisterClassA(windowClass.lpszClassName, windowClass.hInstance);
+	DestroyWindow(Window::hwnd);
+
+	CoUninitialize();
 }
 
-bool SGLF::shouldClose()
+bool Window::shouldClose()
 {
-	if (SGLF::forceClose)
-		glfwSetWindowShouldClose(SGLF::window, GLFW_TRUE);
+	if (Window::forceClose)
+		return true;
 
-	return glfwWindowShouldClose(SGLF::window);
-}
-
-void SGLF::clearScreen(const Color &color)
-{
-	glClearColor(float{color.r} / 255.0f, float{color.g} / 255.0f, float{color.b} / 255.0f, float{color.a} / 255.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-}
-
-void SGLF::setResizeCallback(GLFWframebuffersizefun callback)
-{
-	glfwSetFramebufferSizeCallback(SGLF::window, callback);
-}
-
-void SGLF::setViewport(int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
-
-void SGLF::draw()
-{
-	Input::reset();
-	glfwSwapBuffers(SGLF::window);
-	glfwPollEvents();
-}
-
-void SGLF::setRenderTexture(RenderTexture *renderTexture)
-{
-	if (renderTexture)
+	while (PeekMessage(&Window::msg, nullptr, 0, 0, PM_REMOVE))
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, renderTexture->FBO);
-		SGLF::setViewport(renderTexture->texture->width, renderTexture->texture->height);
-		SGLF::currentCamera = renderTexture->camera;
+		if (Window::msg.message == WM_QUIT)
+			return true;
+
+		TranslateMessage(&Window::msg);
+		DispatchMessage(&Window::msg);
 	}
-	else
+
+	return false;
+}
+
+#pragma endregion WINDOW
+
+#pragma region INPUT
+
+bool Input::up[3];
+bool Input::down[3];
+bool Input::left[3];
+bool Input::right[3];
+
+void Input::keyDown(WPARAM wParam)
+{
+	switch (wParam)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		SGLF::setViewport(SGLF::width, SGLF::height);
-		SGLF::currentCamera = SGLF::defaultCamera;
-	}
+		case VK_ESCAPE:
+			Window::forceClose = true;
+			return;
 
-	SGLF::currentCamera->updateViewProjectionMatrix();
-}
-
-void SGLF::setVAO(GLuint VAO)
-{
-	if (VAO != SGLF::currentVAO) {
-
-		SGLF::currentVAO = VAO;
-		glBindVertexArray(VAO);
+		case VK_UP   : (!Input::up[0])    ? (Input::up[0] = Input::up[1] = true)      : Input::up[0];    break;
+		case VK_DOWN : (!Input::down[0])  ? (Input::down[0] = Input::down[1] = true)  : Input::down[0];  break;
+		case VK_LEFT : (!Input::left[0])  ? (Input::left[0] = Input::left[1] = true)  : Input::left[0];  break;
+		case VK_RIGHT: (!Input::right[0]) ? (Input::right[0] = Input::right[1] = true): Input::right[0]; break;
 	}
 }
 
-void SGLF::setTexture(GLuint texture)
+void Input::keyUp(WPARAM wParam)
 {
-	if (texture != SGLF::currentTexture) {
-
-		SGLF::currentTexture = texture;
-		glBindTexture(GL_TEXTURE_2D, texture);
+	switch (wParam)
+	{
+		case VK_UP:    Input::up[0] = false;    Input::up[2]    = true; break;
+		case VK_DOWN:  Input::down[0] = false;  Input::down[2]  = true; break;
+		case VK_LEFT:  Input::left[0] = false;  Input::left[2]  = true; break;
+		case VK_RIGHT: Input::right[0] = false; Input::right[2] = true; break;
 	}
 }
 
-// *Input IMP
-void Input::reset()
+void Input::resetInput()
 {
-	escape_PRESSED  = false;
-	up_PRESSED      = false;
-	left_PRESSED    = false;
-	down_PRESSED    = false;
-	right_PRESSED   = false;
+	Input::up[1] = false;
+	Input::down[1] = false;
+	Input::left[1] = false;
+	Input::right[1] = false;
 
-	escape_RELEASED = false;
-	up_RELEASED     = false;
-	left_RELEASED   = false;
-	down_RELEASED   = false;
-	right_RELEASED  = false;
+	Input::up[2] = false;
+	Input::down[2] = false;
+	Input::left[2] = false;
+	Input::right[2] = false;
 }
 
-// *Shader IMP
+#pragma endregion INPUT
+
+#pragma region SOUND
+
+LPDIRECTSOUND Sound::dsound;
+LPDIRECTSOUNDBUFFER Sound::primaryBuffer;
+WAVEFORMATEX Sound::waveFormat;
+DSBUFFERDESC Sound::primaryBufferDesc;
+
+void Sound::initialize()
+{
+	DirectSoundCreate(nullptr, &Sound::dsound, nullptr);
+	Sound::dsound->SetCooperativeLevel(Window::hwnd, DSSCL_PRIORITY);
+
+	ZeroMemory(&Sound::waveFormat, sizeof(WAVEFORMATEX));
+	Sound::waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+	Sound::waveFormat.nChannels = 2;
+	Sound::waveFormat.nSamplesPerSec = 44100;
+	Sound::waveFormat.wBitsPerSample = 16;
+	Sound::waveFormat.nBlockAlign = (Sound::waveFormat.nChannels * Sound::waveFormat.wBitsPerSample) / 8;
+	Sound::waveFormat.nAvgBytesPerSec = Sound::waveFormat.nSamplesPerSec * Sound::waveFormat.nBlockAlign;
+
+	ZeroMemory(&Sound::primaryBufferDesc, sizeof(DSBUFFERDESC));
+	Sound::primaryBufferDesc.dwSize = sizeof(DSBUFFERDESC);
+	Sound::primaryBufferDesc.dwFlags = DSBCAPS_PRIMARYBUFFER;
+	Sound::dsound->CreateSoundBuffer(&Sound::primaryBufferDesc, &Sound::primaryBuffer, nullptr);
+	Sound::primaryBuffer->SetFormat(&Sound::waveFormat);
+}
+
+void Sound::finalize()
+{
+	Sound::primaryBuffer->Release();
+	Sound::dsound->Release();
+}
+
+Sound::Sound(const char *fileName)
+{
+	OggVorbis_File vorbisFile;
+	ov_fopen(fileName, &vorbisFile);
+	bufferSize = ov_pcm_total(&vorbisFile, -1) * Sound::waveFormat.nBlockAlign;
+
+	DSBUFFERDESC secondaryBufferDes;
+	ZeroMemory(&secondaryBufferDes, sizeof(DSBUFFERDESC));
+	secondaryBufferDes.dwSize = sizeof(DSBUFFERDESC);
+	secondaryBufferDes.dwFlags = DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
+	secondaryBufferDes.dwBufferBytes = bufferSize;
+	secondaryBufferDes.lpwfxFormat = &Sound::waveFormat;
+
+	Sound::dsound->CreateSoundBuffer(&secondaryBufferDes, &buffer, nullptr);
+	buffer->SetFormat(&Sound::waveFormat);
+	buffer->Lock(0, bufferSize, (LPVOID*)&bufferData, &bufferSize, nullptr, 0, 0);
+
+	unsigned long bytesRead;
+	unsigned long totalRead = 0;
+
+	while (totalRead < bufferSize) {
+
+		bytesRead = ov_read(&vorbisFile, bufferData + totalRead, bufferSize - totalRead, 0, 2, 1, nullptr);
+		
+		if (bytesRead <= 0)
+			break;
+
+		totalRead += bytesRead;
+	}
+	buffer->Unlock(bufferData, totalRead, nullptr, 0);
+	ov_clear(&vorbisFile);
+	preload();
+}
+
+Sound::~Sound()
+{
+	buffer->Release();
+}
+
+void Sound::preload()
+{
+	buffer->Play(0, 0, 0);
+	buffer->SetCurrentPosition(0);
+	buffer->Stop();
+}
+
+void Sound::play()
+{
+	buffer->SetCurrentPosition(0);
+	buffer->Play(0, 0, 0);
+}
+
+void Sound::setVolume(long volume)
+{
+	buffer->SetVolume(volume);
+}
+
+void Sound::setPitch(unsigned int freq)
+{
+	buffer->SetFrequency(freq);
+}
+
+#pragma endregion SOUND
+
+#pragma region SHADER
+
+GLchar Shader::infoLog[512];
+
 static char* readFile(const char *fileName)
 {
 	FILE *file; 
@@ -253,7 +389,7 @@ static GLuint compileShader(unsigned int type, const char *source)
 	int success;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-	if (not success) {
+	if (!success) {
 		glGetShaderInfoLog(shader, 512, nullptr, Shader::infoLog);
 		printf("Shader compilation error:\n%s\n", Shader::infoLog);
 	}
@@ -276,7 +412,7 @@ Shader::Shader(const char *vertexShader, const char *fragmentShader)
 	GLint success;
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
 
-	if (not success) {
+	if (!success) {
 		glGetProgramInfoLog(program, 512, nullptr, Shader::infoLog);
 		printf("Shader linking error:\n%s\n", Shader::infoLog);
 	}
@@ -295,14 +431,17 @@ Shader::~Shader()
 
 void Shader::use()
 {
-	if (SGLF::currentShader != this) {
+	if (Graphics::currentShader != this) {
 
-		SGLF::currentShader = this;
-  	glUseProgram(program);
+		Graphics::currentShader = this;
+		glUseProgram(program);
 	}
 }
 
-// *Camera IMP
+#pragma endregion SHADER
+
+#pragma region CAMERA
+
 Camera::Camera(unsigned int width, unsigned int height)
 : position(0.0f, 0.0f), zoom(1.0f), width(width), height(height), view(0.0f), projection(0.0f), viewProjection(0.0f)
 {
@@ -354,7 +493,48 @@ void Camera::updateProjection()
 	projection = ortho(left, right, top, bottom, -1.0f, 1.0f);
 }
 
-// *Texture IMP
+#pragma endregion CAMERA
+
+#pragma region TEXTURE
+
+struct Vertex
+{
+	float position[2];
+	float uv[2];
+};
+
+static const Vertex vertices[] = {
+	{ { 0.0f, 0.0f }, { 0.0f, 0.0f } },
+	{ { 1.0f, 0.0f }, { 1.0f, 0.0f } },
+	{ { 0.0f, 1.0f }, { 0.0f, 1.0f } },
+	{ { 1.0f, 1.0f }, { 1.0f, 1.0f } }
+};
+
+static const unsigned int indices[] = {
+	0, 1, 2,
+	1, 2, 3,
+};
+
+IWICImagingFactory *Texture::wicFactory;
+Shader *Texture::shader;
+GLuint Texture::VAO;
+GLuint Texture::VBO;
+GLuint Texture::EBO;
+
+static LPCWSTR toWideString(const char *string)
+{
+	if (!string)
+		return nullptr;
+
+	int bufferSize = MultiByteToWideChar(CP_UTF8, 0, string, -1, nullptr, 0);
+	if (bufferSize == 0)
+		return nullptr;
+
+	wchar_t *wideString = new wchar_t[bufferSize];
+	MultiByteToWideChar(CP_UTF8, 0, string, -1, wideString, bufferSize);
+	return wideString;
+}
+
 void Texture::initialize()
 {
 	//* VAO/Shader For 2D Texture drawing
@@ -384,10 +564,20 @@ void Texture::initialize()
 	glVertexArrayAttribFormat(Texture::VAO, aTexCoord_location, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, uv));
 	glVertexArrayAttribBinding(Texture::VAO, aTexCoord_location, vbufIndex);
 	glEnableVertexArrayAttrib(Texture::VAO, aTexCoord_location);
+
+	CoCreateInstance
+	(
+		CLSID_WICImagingFactory,
+		nullptr,
+		CLSCTX_INPROC_SERVER,
+		IID_IWICImagingFactory,
+		(LPVOID*)&Texture::wicFactory
+	);
 }
 
 void Texture::finalize()
 {
+	Texture::wicFactory->Release();
 	glDeleteBuffers(1, &Texture::EBO);
 	glDeleteBuffers(1, &Texture::VBO);
 	glDeleteVertexArrays(1, &Texture::VAO);
@@ -396,16 +586,51 @@ void Texture::finalize()
 
 void Texture::getPixelData(const char *fileName, unsigned char *&buffer, unsigned int &width, unsigned int &height)
 {
-	int x, y, comp;
-	
-	buffer = stbi_load(fileName, &x, &y, &comp, 4);
-	width = (unsigned int)x;
-	height = (unsigned int)y;
-}
+	IWICBitmapDecoder *wicDecoder;
+	wicFactory->CreateDecoder(GUID_ContainerFormatPng, nullptr, &wicDecoder);
+	LPCWSTR w_fileName = toWideString(fileName);
 
-void Texture::freePixelData(unsigned char *&buffer)
-{
-	stbi_image_free(buffer);
+	IWICStream *wicStream = nullptr;
+	Texture::wicFactory->CreateStream(&wicStream);
+	wicStream->InitializeFromFilename(w_fileName, GENERIC_READ);
+
+	wicDecoder->Initialize(
+		wicStream,
+		WICDecodeMetadataCacheOnLoad
+	);
+
+	IWICBitmapFrameDecode *wicFrame = nullptr;
+	wicDecoder->GetFrame(0, &wicFrame);
+
+	IWICFormatConverter *wicConverter = nullptr;
+	Texture::wicFactory->CreateFormatConverter(&wicConverter);
+
+	wicConverter->Initialize
+	(
+		wicFrame,
+		GUID_WICPixelFormat32bppRGBA,
+		WICBitmapDitherTypeNone,
+		nullptr,
+		0.0f,
+		WICBitmapPaletteTypeCustom
+	);
+
+	wicConverter->GetSize(&width, &height);
+
+	unsigned int bufferSize = width * height * 4;
+	buffer = new unsigned char[bufferSize];
+
+	wicConverter->CopyPixels(
+		nullptr,
+		width * 4,
+		bufferSize,
+		buffer
+	);
+
+	delete[] w_fileName;
+	wicConverter->Release();
+	wicFrame->Release();
+	wicDecoder->Release();
 }
 
 Texture::Texture(const char *fileName, unsigned int maxInstances)
@@ -432,7 +657,7 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int maxInstan
 	unsigned char color[4] = { 0, 0, 0, 255 };
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
 	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
-	glClearTexImage(id, 0, GL_RGBA, GL_UNSIGNED_BYTE, color);
+	glClearTexSubImage(id, 0, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -450,14 +675,14 @@ Texture::~Texture()
 	glDeleteBuffers(1, &SSBO);
 	glDeleteTextures(1, &id);
 	delete[] SSBO_Data;
-	Texture::freePixelData(pixelData);
+	delete[] pixelData;
 }
 
 void Texture::draw()
 {
 	Texture::shader->use();
-	SGLF::setVAO(Texture::VAO);
-	SGLF::setTexture(id);
+	Graphics::setVAO(Texture::VAO);
+	Graphics::setTexture(id);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(S_CommonTexture) * currentInstance, SSBO_Data);
@@ -466,7 +691,10 @@ void Texture::draw()
 	currentInstance = 0;
 }
 
-// *Sprite IMP
+#pragma endregion TEXTURE
+
+#pragma region SPRITE
+
 Sprite::Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst)
 : texture(texture), src(src), dst(dst)
 {
@@ -481,14 +709,17 @@ void Sprite::batch()
 			{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}},
 			{float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
 			{color.getVec4()},
-			{SGLF::currentCamera->getViewProjectionMatrix()},
+			{Graphics::currentCamera->getViewProjectionMatrix()},
 			{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
 			{0},
 		};
 	}
 }
 
-// *RenderTexture IMP
+#pragma endregion SPRITE
+
+#pragma region RENDER_TEXTURE
+
 RenderTexture::RenderTexture(unsigned int width, unsigned int height, Camera *camera)
 {
 	rotation = 0.0f;
@@ -521,8 +752,254 @@ void RenderTexture::batch()
 		{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}},
 		{float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
 		{color.getVec4()},
-		{SGLF::currentCamera->getViewProjectionMatrix()},
+		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
 		{1},
 	};
 }
+
+#pragma endregion RENDER_TEXTURE
+
+#pragma region GRAPHICS
+
+HGLRC Graphics::rc;
+HDC Graphics::dc;
+Shader *Graphics::currentShader;
+GLuint Graphics::currentVAO;
+GLuint Graphics::currentTexture;
+Camera *Graphics::currentCamera;
+Camera *Graphics::defaultCamera;
+LARGE_INTEGER Graphics::frequency;
+LARGE_INTEGER Graphics::lastFrameTime;
+float Graphics::fps;
+float Graphics::delta;
+
+void Graphics::loadExtensionsWGL()
+{
+	HWND dummy = CreateWindowExW(
+		0, L"STATIC", L"DummyWindow", WS_OVERLAPPED,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		nullptr, nullptr, nullptr, nullptr);
+
+	HDC dc = GetDC(dummy);
+
+	PIXELFORMATDESCRIPTOR desc =
+	{
+		.nSize = sizeof(PIXELFORMATDESCRIPTOR),
+		.nVersion = 1,
+		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		.iPixelType = PFD_TYPE_RGBA,
+		.cColorBits = 24,
+	};
+
+	int format = ChoosePixelFormat(dc, &desc);
+	DescribePixelFormat(dc, format, sizeof(PIXELFORMATDESCRIPTOR), &desc);
+
+	// reason to create dummy window is that SetPixelFormat can be called only once for the window
+	SetPixelFormat(dc, format, &desc);
+
+	HGLRC rc = wglCreateContext(dc);
+
+	wglMakeCurrent(dc, rc);
+
+	wglGetExtensionsStringARB  = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
+	wglChoosePixelFormatARB    = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+	wglSwapIntervalEXT         = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+
+	wglMakeCurrent(nullptr, nullptr);
+	wglDeleteContext(rc);
+	ReleaseDC(dummy, dc);
+	DestroyWindow(dummy);
+}
+
+void Graphics::loadExtensionsGL()
+{
+	glCreateBuffers               = (PFNGLCREATEBUFFERSPROC)wglGetProcAddress("glCreateBuffers");
+	glNamedBufferStorage          = (PFNGLNAMEDBUFFERSTORAGEPROC)wglGetProcAddress("glNamedBufferStorage");
+	glBindVertexArray             = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
+	glCreateVertexArrays          = (PFNGLCREATEVERTEXARRAYSPROC)wglGetProcAddress("glCreateVertexArrays");
+	glVertexArrayAttribBinding    = (PFNGLVERTEXARRAYATTRIBBINDINGPROC)wglGetProcAddress("glVertexArrayAttribBinding");
+	glVertexArrayVertexBuffer     = (PFNGLVERTEXARRAYVERTEXBUFFERPROC)wglGetProcAddress("glVertexArrayVertexBuffer");
+	glVertexArrayAttribFormat     = (PFNGLVERTEXARRAYATTRIBFORMATPROC)wglGetProcAddress("glVertexArrayAttribFormat");
+	glEnableVertexArrayAttrib     = (PFNGLENABLEVERTEXARRAYATTRIBPROC)wglGetProcAddress("glEnableVertexArrayAttrib");
+	glGetProgramiv                = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
+	glGetProgramInfoLog           = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
+	glCreateTextures              = (PFNGLCREATETEXTURESPROC)wglGetProcAddress("glCreateTextures");
+	glTextureParameteri           = (PFNGLTEXTUREPARAMETERIPROC)wglGetProcAddress("glTextureParameteri");
+	glTextureStorage2D            = (PFNGLTEXTURESTORAGE2DPROC)wglGetProcAddress("glTextureStorage2D");
+	glTextureSubImage2D           = (PFNGLTEXTURESUBIMAGE2DPROC)wglGetProcAddress("glTextureSubImage2D");
+	glDeleteFramebuffers          = (PFNGLDELETEFRAMEBUFFERSPROC)wglGetProcAddress("glDeleteFramebuffers");
+	glBindFramebuffer             = (PFNGLBINDFRAMEBUFFERPROC)wglGetProcAddress("glBindFramebuffer");
+	glCreateShader                = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
+	glShaderSource                = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
+	glCompileShader               = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
+	glGetShaderiv                 = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
+	glGetShaderInfoLog            = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
+	glCreateProgram               = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
+	glAttachShader                = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
+	glLinkProgram                 = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
+	glDeleteShader                = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
+	glDeleteProgram               = (PFNGLDELETEPROGRAMPROC)wglGetProcAddress("glDeleteProgram");
+	glUseProgram                  = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
+	glClearTexSubImage            = (PFNGLCLEARTEXSUBIMAGEPROC)wglGetProcAddress("glClearTexSubImage");
+	glVertexArrayElementBuffer    = (PFNGLVERTEXARRAYELEMENTBUFFERPROC)wglGetProcAddress("glVertexArrayElementBuffer");
+	glDeleteVertexArrays          = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
+	glDeleteBuffers               = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
+	glNamedBufferData             = (PFNGLNAMEDBUFFERDATAPROC)wglGetProcAddress("glNamedBufferData");
+	glBufferSubData               = (PFNGLBUFFERSUBDATAPROC)wglGetProcAddress("glBufferSubData");
+	glBindBufferBase              = (PFNGLBINDBUFFERBASEPROC)wglGetProcAddress("glBindBufferBase");
+	glCreateFramebuffers          = (PFNGLCREATEFRAMEBUFFERSPROC)wglGetProcAddress("glCreateFramebuffers");
+	glNamedFramebufferTexture     = (PFNGLNAMEDFRAMEBUFFERTEXTUREPROC)wglGetProcAddress("glNamedFramebufferTexture");
+	glNamedFramebufferDrawBuffers = (PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC)wglGetProcAddress("glNamedFramebufferDrawBuffers");
+	glDrawElementsInstanced       = (PFNGLDRAWELEMENTSINSTANCEDPROC)wglGetProcAddress("glDrawElementsInstanced");
+	glActiveTexture               = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
+}
+
+void Graphics::initialize()
+{
+	Graphics::loadExtensionsWGL();
+
+	int piAttribIList[] =
+	{
+		WGL_DRAW_TO_WINDOW_ARB,           GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB,           GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB,            GL_TRUE,
+		WGL_PIXEL_TYPE_ARB,               WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB,               24,
+		WGL_DEPTH_BITS_ARB,               24,
+		WGL_STENCIL_BITS_ARB,             8,
+		WGL_ACCELERATION_ARB,             WGL_FULL_ACCELERATION_ARB,
+		WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB, GL_TRUE,
+		0,
+	};
+
+	int format;
+	UINT formats;
+	Graphics::dc = GetDC(Window::hwnd);
+	wglChoosePixelFormatARB(Graphics::dc, piAttribIList, nullptr, 1, &format, &formats);
+
+	PIXELFORMATDESCRIPTOR desc = {
+		.nSize = sizeof(PIXELFORMATDESCRIPTOR),
+		.nVersion = 1,
+		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		.iPixelType = PFD_TYPE_RGBA,
+		.cColorBits = 24,
+	};
+
+	DescribePixelFormat(Graphics::dc, format, sizeof(PIXELFORMATDESCRIPTOR), &desc);
+	SetPixelFormat(Graphics::dc, format, &desc);
+
+	int attribList[] =
+	{
+		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+		WGL_CONTEXT_MINOR_VERSION_ARB, 6,
+		WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		0,
+	};
+
+	Graphics::rc = wglCreateContextAttribsARB(Graphics::dc, nullptr, attribList);
+	wglMakeCurrent(Graphics::dc, Graphics::rc);
+
+	Graphics::loadExtensionsGL();
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_STENCIL_TEST);
+	glDepthMask(GL_FALSE);
+	wglSwapIntervalEXT(1);
+	glActiveTexture(GL_TEXTURE0);
+
+	Graphics::clearScreen({255, 255, 255, 255});
+
+	Graphics::currentShader = nullptr;
+	Graphics::currentVAO = 0;
+	Graphics::currentTexture = 0;
+	Graphics::defaultCamera = new Camera(Window::width, Window::height);
+	Graphics::currentCamera = Graphics::defaultCamera;
+	Graphics::setRenderTexture();
+
+	Texture::initialize();
+
+	QueryPerformanceFrequency(&Graphics::frequency);
+	QueryPerformanceCounter(&Graphics::lastFrameTime);
+	Graphics::fps = 0.0f;
+	Graphics::delta = 0.0f;
+}
+
+void Graphics::finalize()
+{
+	Texture::finalize();
+
+	wglMakeCurrent(GLM_NULLPTR, GLM_NULLPTR);
+	wglDeleteContext(Graphics::rc);
+	ReleaseDC(Window::hwnd, Graphics::dc);
+}
+
+void Graphics::clearScreen(const Color &color)
+{
+	glClearColor(float{color.r} / 255.0f, float{color.g} / 255.0f, float{color.b} / 255.0f, float{color.a} / 255.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void Graphics::setViewport(unsigned int width, unsigned int height)
+{
+	glViewport(0, 0, width, height);
+}
+
+void Graphics::draw()
+{
+	SwapBuffers(Graphics::dc);
+}
+
+void Graphics::setRenderTexture(RenderTexture *renderTexture)
+{
+	if (renderTexture)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, renderTexture->FBO);
+		Graphics::setViewport(renderTexture->texture->width, renderTexture->texture->height);
+		Graphics::currentCamera = renderTexture->camera;
+	}
+	else
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		Graphics::setViewport(Window::width, Window::height);
+		Graphics::currentCamera = Graphics::defaultCamera;
+	}
+
+	Graphics::currentCamera->updateViewProjectionMatrix();
+}
+
+void Graphics::setVAO(GLuint VAO)
+{
+	if (VAO != Graphics::currentVAO) {
+
+		Graphics::currentVAO = VAO;
+		glBindVertexArray(VAO);
+	}
+}
+
+void Graphics::setTexture(GLuint texture)
+{
+	if (texture != Graphics::currentTexture) {
+
+		Graphics::currentTexture = texture;
+		glBindTexture(GL_TEXTURE_2D, texture);
+	}
+}
+
+void Graphics::updateTime()
+{
+	static LARGE_INTEGER currentFrameTime;
+	QueryPerformanceCounter(&currentFrameTime);
+
+	Graphics::delta = (float)(currentFrameTime.QuadPart - Graphics::lastFrameTime.QuadPart) / Graphics::frequency.QuadPart;
+	Graphics::lastFrameTime = currentFrameTime;
+
+	if (Graphics::delta > 0.0f)
+		Graphics::fps = 1.0f / Graphics::delta;
+}
+
+#pragma endregion GRAPHICS

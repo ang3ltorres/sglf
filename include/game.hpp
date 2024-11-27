@@ -17,7 +17,7 @@ public:
 
 	static void initialize();
 	static void finalize();
-	static Shader *shader;
+	static sglf::Shader *shader;
 	static GLuint VAO;
 	static GLuint VBO;
 	static GLuint EBO;
@@ -44,24 +44,24 @@ public:
 class Solid
 {
 public:
-	Solid(Texture *texture, glm::uvec4 src, glm::uvec4 dst);
-	Solid(const Texture &) = delete;
+	Solid(sglf::Texture *texture, glm::ivec4 src, glm::ivec4 dst);
+	Solid(const sglf::Texture &) = delete;
 	virtual ~Solid();
 
 	bool collision(const Bitmask *bitmask);
 	bool move(unsigned int dir, unsigned int amount, const Bitmask *bitmask);
 
 	unsigned char *pixel;
-	Sprite *sprite;
+	sglf::Sprite *sprite;
 };
 
 class Player
 :
-public Solid,
-public Entity
+	public Solid,
+	public Entity
 {
 public:
-	Player(glm::uvec2 spawnPoint);
+	Player(glm::vec2 spawnPoint);
 	virtual ~Player() = default;
 
 	virtual void update() override;
@@ -74,7 +74,7 @@ public:
 	unsigned int windowWidth;
 	unsigned int windowHeight;
 
-	Game();
+	Game(HINSTANCE &hInstance, int nCmdShow);
 	Game(const Game&) = delete;
 	~Game();
 
@@ -83,8 +83,9 @@ public:
 	void draw();
 
 	// !Resources
-	static RenderTexture *renderTexture;
-	static Texture *defaultAtlas;
+	static sglf::RenderTexture *renderTexture;
+	static sglf::Texture *defaultAtlas;
 	static Bitmask *bitmask;
 	static Player *player;
+	static sglf::Sound *sound;
 };

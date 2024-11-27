@@ -6,23 +6,20 @@ using namespace glm;
 #include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
 
-// *Game IMP
-RenderTexture *Game::renderTexture;
-Texture *Game::defaultAtlas;
+sglf::RenderTexture *Game::renderTexture;
+sglf::Texture *Game::defaultAtlas;
 Bitmask *Game::bitmask;
 Player *Game::player;
+sglf::Sound *Game::sound;
 
-static void resized(GLFWwindow *window, int width, int height)
+void resized(unsigned int width, unsigned int height)
 {
-	SGLF::setViewport(width, height);
-	SGLF::defaultCamera->width = width;
-	SGLF::defaultCamera->height = height;
-	SGLF::width = width;
-	SGLF::height = height;
+	sglf::Graphics::defaultCamera->width = width;
+	sglf::Graphics::defaultCamera->height = height;
 
-	int scaleX = width / Game::renderTexture->texture->width;
-	int scaleY = height / Game::renderTexture->texture->height;
-	int scale = scaleX < scaleY ? scaleX : scaleY;
+	unsigned int scaleX = width / Game::renderTexture->texture->width;
+	unsigned int scaleY = height / Game::renderTexture->texture->height;
+	unsigned int scale = scaleX < scaleY ? scaleX : scaleY;
 	Game::renderTexture->dst.z = scale * 256;
 	Game::renderTexture->dst.w = scale * 240;
 
@@ -30,26 +27,33 @@ static void resized(GLFWwindow *window, int width, int height)
 	Game::renderTexture->dst.y = (height - Game::renderTexture->dst.w) / 2;
 }
 
-Game::Game()
+Game::Game(HINSTANCE &hInstance, int nCmdShow)
 {
-	int width = 800;
-	int height = 600;
+	unsigned int width = 800;
+	unsigned int height = 600;
 
-	SGLF::initialize(width, height, "OpenGL");
-	SGLF::setResizeCallback(&resized);
+	sglf::Window::initialize(width, height, "OpenGL", hInstance, nCmdShow);
+	sglf::Window::resizedCallback = &resized;
+
+	sglf::Graphics::initialize();
+	sglf::Sound::initialize();
 	Bitmask::initialize();
 
-	Game::renderTexture = new RenderTexture(256, 240);
-	Game::defaultAtlas = new Texture("C:/Users/angel/Desktop/coliisionMask.png");
-	Game::bitmask = new Bitmask{"C:/Users/angel/Desktop/mask.png"};
-	Game::player = new Player({0, 0});
+	defaultAtlas = new sglf::Texture("C:/Users/angel/Desktop/coliisionMask.png");
+	player = new Player({0, 0});
 
-	resized(SGLF::window, width, height);
+	sound = new sglf::Sound("C:/dev/coin.ogg");
+
+	renderTexture = new sglf::RenderTexture(256, 240);
+	sglf::Window::resizedCallback(width, height);
+
+	bitmask = new Bitmask{"C:/Users/angel/Desktop/mask.png"};
 }
 
 Game::~Game()
 {
 	// &Release resources
+	delete Game::sound;
 	delete Game::player;
 	delete Game::bitmask;
 	delete Game::defaultAtlas;
@@ -57,12 +61,14 @@ Game::~Game()
 
 	// &Release main resources
 	Bitmask::finalize();
-	SGLF::finalize();
+	sglf::Sound::finalize();
+	sglf::Graphics::finalize();
+	sglf::Window::finalize();
 }
 
 void Game::loop()
 {
-	while (!SGLF::shouldClose())
+	while (!sglf::Window::shouldClose())
 	{
 		Game::update();
 		Game::draw();
@@ -71,34 +77,31 @@ void Game::loop()
 
 void Game::update()
 {
-	if (Input::escape_PRESSED)
-		SGLF::forceClose = true;
-
 	player->update();
+	sglf::Input::resetInput();
 }
 
 void Game::draw()
 {
-	//
-	SGLF::setRenderTexture(renderTexture);
-	SGLF::clearScreen({0, 0, 0, 255});
+	sglf::Graphics::setRenderTexture(renderTexture);
+	sglf::Graphics::clearScreen({0, 0, 0, 255});
 
 	player->draw();
 	bitmask->draw();
 
 	// Draw to render texture
-	SGLF::setRenderTexture();
-	SGLF::clearScreen({170, 170, 170, 255});
+	sglf::Graphics::setRenderTexture();
+	sglf::Graphics::clearScreen({170, 170, 170, 255});
 	renderTexture->batch();
 	renderTexture->texture->draw();
-	SGLF::draw();
+	sglf::Graphics::draw();
 }
 
 static void getAlphaImage(const char *fileName, unsigned char *&buffer, unsigned int &width, unsigned int &height)
 {
 	unsigned char *pixelRGBA;
 
-	Texture::getPixelData(fileName, pixelRGBA, width, height);
+	sglf::Texture::getPixelData(fileName, pixelRGBA, width, height);
 
 	unsigned int pixelCount = width * height;
 	buffer = new unsigned char[pixelCount];
@@ -106,11 +109,10 @@ static void getAlphaImage(const char *fileName, unsigned char *&buffer, unsigned
 	for (unsigned int i = 0; i < pixelCount; i++)
 		buffer[i] = pixelRGBA[(i * 4) + 3];
 
-	Texture::freePixelData(pixelRGBA);
+	delete[] pixelRGBA;
 }
 
-// *Bitmask IMP
-Shader *Bitmask::shader;
+sglf::Shader *Bitmask::shader;
 GLuint Bitmask::VAO;
 GLuint Bitmask::VBO;
 GLuint Bitmask::EBO;
@@ -136,7 +138,7 @@ static const unsigned int indices[] = {
 
 void Bitmask::initialize()
 {
-	Bitmask::shader = new Shader("../shader/bitmask.vs", "../shader/bitmask.fs");
+	Bitmask::shader = new sglf::Shader("../shader/bitmask.vs", "../shader/bitmask.fs");
 
 	glCreateVertexArrays(1, &Bitmask::VAO);
 
@@ -175,12 +177,12 @@ void Bitmask::finalize()
 void Bitmask::draw()
 {
 	Bitmask::shader->use();
-	SGLF::setVAO(Bitmask::VAO);
-	SGLF::setTexture(id);
+	sglf::Graphics::setVAO(Bitmask::VAO);
+	sglf::Graphics::setTexture(id);
 
 	Bitmask::SSBO_Data =
 	{
-		{SGLF::currentCamera->getViewProjectionMatrix()},
+		{sglf::Graphics::currentCamera->getViewProjectionMatrix()},
 		{glm::scale(glm::mat4(1.0f), glm::vec3(width, height, 1.0f))},
 	};
 
@@ -215,13 +217,13 @@ Bitmask::~Bitmask()
 }
 
 // *Solid IMP
-Solid::Solid(Texture *texture, glm::uvec4 src, glm::uvec4 dst)
+Solid::Solid(sglf::Texture *texture, glm::ivec4 src, glm::ivec4 dst)
 {
-	sprite = new Sprite(texture, src, dst);
+	sprite = new sglf::Sprite(texture, src, dst);
 	pixel = new unsigned char[src.z * src.w];
 
-	for (unsigned int y = 0; y < src.w; y++)
-	for (unsigned int x = 0; x < src.z; x++)
+	for (int y = 0; y < src.w; y++)
+	for (int x = 0; x < src.z; x++)
 	{
 		unsigned int texIndex = ((src.y + y) * texture->width + (src.x + x)) * 4;
 		pixel[y * src.z + x] = texture->pixelData[texIndex + 3];
@@ -284,7 +286,7 @@ bool Solid::move(unsigned int dir, unsigned int amount, const Bitmask *bitmask)
 	return false;
 }
 
-Player::Player(glm::uvec2 spawnPoint)
+Player::Player(glm::vec2 spawnPoint)
 : Solid(Game::defaultAtlas, {16, 16, 16, 16}, {spawnPoint.x, spawnPoint.y, 16, 16})
 {
 }
@@ -292,11 +294,12 @@ Player::Player(glm::uvec2 spawnPoint)
 void Player::update()
 {
 	int vel = 1;
+	if (sglf::Input::down[2])  Game::sound->play();
 
-	if (Input::down_DOWN)  move(270, vel, Game::bitmask);
-	if (Input::up_DOWN)    move(90,  vel, Game::bitmask);
-	if (Input::left_DOWN)  move(180, vel, Game::bitmask);
-	if (Input::right_DOWN) move(0,   vel, Game::bitmask);
+	if (sglf::Input::down[0])  move(270, vel, Game::bitmask);
+	if (sglf::Input::up[0])    move(90,  vel, Game::bitmask);
+	if (sglf::Input::left[0])  move(180, vel, Game::bitmask);
+	if (sglf::Input::right[0]) move(0,   vel, Game::bitmask);
 }
 
 void Player::draw()

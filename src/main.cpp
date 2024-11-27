@@ -1,8 +1,11 @@
 #include "game.hpp"
 
-int main()
+int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	Game game;
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
+
+	Game game{hInstance, nShowCmd};
 	game.loop();
 
 	return 0;
