@@ -134,6 +134,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Input::keyUp(wParam);
 			return 0;
 		}
+
+		case WM_MOUSEMOVE:
+		{
+			Input::mousePos.x = LOWORD(lParam);
+			Input::mousePos.y = HIWORD(lParam);
+			printf("X: %u\n,Y: %u\n", Input::mousePos.x, Input::mousePos.y);
+			return 0;
+		}
 	}
 
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -220,6 +228,7 @@ bool Input::up[3];
 bool Input::down[3];
 bool Input::left[3];
 bool Input::right[3];
+uvec2 Input::mousePos;
 
 void Input::keyDown(WPARAM wParam)
 {
