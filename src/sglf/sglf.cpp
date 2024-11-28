@@ -930,8 +930,6 @@ void Graphics::initialize()
 	Graphics::currentCamera = Graphics::defaultCamera;
 	Graphics::setRenderTexture();
 
-	Texture::initialize();
-
 	QueryPerformanceFrequency(&Graphics::frequency);
 	QueryPerformanceCounter(&Graphics::lastFrameTime);
 	Graphics::fps = 0.0f;
@@ -940,8 +938,6 @@ void Graphics::initialize()
 
 void Graphics::finalize()
 {
-	Texture::finalize();
-
 	wglMakeCurrent(GLM_NULLPTR, GLM_NULLPTR);
 	wglDeleteContext(Graphics::rc);
 	ReleaseDC(Window::hwnd, Graphics::dc);
@@ -1012,3 +1008,19 @@ void Graphics::updateTime()
 }
 
 #pragma endregion GRAPHICS
+
+void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow)
+{
+	sglf::Window::initialize(width, height, "OpenGL", hInstance, nCmdShow);
+	sglf::Graphics::initialize();
+	sglf::Texture::initialize();
+	sglf::Sound::initialize();
+}
+
+void sglf::finalize()
+{
+	sglf::Sound::finalize();
+	sglf::Texture::finalize();
+	sglf::Graphics::finalize();
+	sglf::Window::finalize();
+}

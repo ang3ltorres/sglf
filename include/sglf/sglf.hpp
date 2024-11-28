@@ -304,4 +304,7 @@ namespace sglf
 		// Internal Methods
 		static void setViewport(unsigned int width, unsigned int height);
 	};
+
+	void initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow);
+	void finalize();
 }
