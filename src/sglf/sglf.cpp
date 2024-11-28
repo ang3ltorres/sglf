@@ -255,7 +255,7 @@ void Input::keyUp(WPARAM wParam)
 	}
 }
 
-void Input::resetInput()
+void Input::reset()
 {
 	Input::up[1] = false;
 	Input::down[1] = false;
@@ -748,8 +748,8 @@ RenderTexture::RenderTexture(unsigned int width, unsigned int height, Camera *ca
 	internalCamera = camera ? false : true;
 	this->camera = camera ? camera : new Camera(width, height);
 
-	this->src = {0.0f, 0.0f, float{width}, float{height}};
-	this->dst = {0.0f, 0.0f, float{width}, float{height}};
+	this->src = {0, 0, width, height};
+	this->dst = {0, 0, width, height};
 
 	glCreateFramebuffers(1, &FBO);
 	glNamedFramebufferTexture(FBO, GL_COLOR_ATTACHMENT0, texture->id, 0);

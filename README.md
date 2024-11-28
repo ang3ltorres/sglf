@@ -52,10 +52,9 @@ int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
     sglf::Graphics::clearScreen({255, 143, 119, 255});
     renderTexture->batch();
     renderTexture->texture->draw();
-
     
     sglf::Graphics::draw();
-    sglf::Input::resetInput();
+    sglf::Input::reset();
   }
 
   delete sound;

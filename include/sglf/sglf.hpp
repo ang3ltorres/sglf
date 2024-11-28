@@ -126,7 +126,7 @@ namespace sglf
 		static void keyDown(WPARAM wParam);
 		static void keyUp(WPARAM wParam);
 
-		static void resetInput();
+		static void reset();
 	};
 
 	class Sound
