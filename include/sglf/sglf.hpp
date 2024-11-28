@@ -73,8 +73,7 @@ namespace sglf
 {
 	struct alignas(16) S_CommonTexture
 	{
-		glm::vec2 u_SrcOffset;
-		glm::vec2 u_SrcSize;
+		glm::vec4 u_Src;
 		glm::vec4 u_TintColor;
 		glm::mat4 u_ViewProjection;
 		glm::mat4 u_Model;

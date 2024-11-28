@@ -139,7 +139,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			Input::mousePos.x = LOWORD(lParam);
 			Input::mousePos.y = HIWORD(lParam);
-			printf("X: %u\n,Y: %u\n", Input::mousePos.x, Input::mousePos.y);
 			return 0;
 		}
 	}
@@ -715,8 +714,7 @@ void Sprite::batch()
 {
 	if (texture) {
 		texture->SSBO_Data[texture->currentInstance++] = {
-			{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}},
-			{float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
+			{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}, float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
 			{color.getVec4()},
 			{Graphics::currentCamera->getViewProjectionMatrix()},
 			{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
@@ -758,8 +756,7 @@ RenderTexture::~RenderTexture()
 void RenderTexture::batch()
 {
 	texture->SSBO_Data[texture->currentInstance++] = {
-		{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}},
-		{float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
+		{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}, float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
 		{color.getVec4()},
 		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
