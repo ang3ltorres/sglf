@@ -296,7 +296,6 @@ namespace sglf
 
 		// Library Methods
 		static void clearScreen(const Color &color);
-		static void draw();
 		static void setRenderTexture(RenderTexture *renderTexture = nullptr);
 		static void setVAO(GLuint VAO);
 		static void setTexture(GLuint texture);
@@ -308,4 +307,5 @@ namespace sglf
 
 	void initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow);
 	void finalize();
+	void endFrame();
 }

@@ -961,11 +961,6 @@ void Graphics::setViewport(unsigned int width, unsigned int height)
 	glViewport(0, 0, width, height);
 }
 
-void Graphics::draw()
-{
-	SwapBuffers(Graphics::dc);
-}
-
 void Graphics::setRenderTexture(RenderTexture *renderTexture)
 {
 	if (renderTexture)
@@ -1030,4 +1025,11 @@ void sglf::finalize()
 	sglf::Texture::finalize();
 	sglf::Graphics::finalize();
 	sglf::Window::finalize();
+}
+
+void sglf::endFrame()
+{
+	SwapBuffers(Graphics::dc);
+	Input::reset();
+	Graphics::updateTime();
 }
