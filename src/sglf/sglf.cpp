@@ -654,6 +654,10 @@ Texture::Texture(const char *fileName, unsigned int maxInstances)
 	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+	flipY = 0;
+	glCreateBuffers(1, &UBO);
+	glNamedBufferData(UBO, sizeof(int), &flipY, GL_STREAM_DRAW);
+
 	glCreateBuffers(1, &SSBO);
 	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
 	SSBO_Data = new S_CommonTexture[maxInstances];
@@ -671,6 +675,10 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int maxInstan
 	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+	flipY = 1;
+	glCreateBuffers(1, &UBO);
+	glNamedBufferData(UBO, sizeof(int), &flipY, GL_STREAM_DRAW);
+
 	glCreateBuffers(1, &SSBO);
 	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
 	SSBO_Data = new S_CommonTexture[maxInstances];
@@ -680,6 +688,7 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int maxInstan
 
 Texture::~Texture()
 {
+	glDeleteBuffers(1, &UBO);
 	glDeleteBuffers(1, &SSBO);
 	glDeleteTextures(1, &id);
 	delete[] SSBO_Data;
@@ -691,11 +700,14 @@ void Texture::draw()
 	Texture::shader->use();
 	Graphics::setVAO(Texture::VAO);
 	Graphics::setTexture(id);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
+	// glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(int), &flipY);
+	
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(S_CommonTexture) * currentInstance, SSBO_Data);
-	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, currentInstance);
 	
+	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, currentInstance);
 	currentInstance = 0;
 }
 
@@ -718,7 +730,6 @@ void Sprite::batch()
 			{color.getVec4()},
 			{Graphics::currentCamera->getViewProjectionMatrix()},
 			{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
-			{0},
 		};
 	}
 }
@@ -760,7 +771,6 @@ void RenderTexture::batch()
 		{color.getVec4()},
 		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
-		{1},
 	};
 }
 

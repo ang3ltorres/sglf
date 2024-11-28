@@ -77,7 +77,6 @@ namespace sglf
 		glm::vec4 u_TintColor;
 		glm::mat4 u_ViewProjection;
 		glm::mat4 u_Model;
-		int       u_flipY;
 	};
 
 	struct Color
@@ -220,6 +219,9 @@ namespace sglf
 		S_CommonTexture *SSBO_Data;
 		unsigned int maxInstances;
 		unsigned int currentInstance;
+
+		GLuint UBO;
+		int flipY;
 
 		void draw();
 	};

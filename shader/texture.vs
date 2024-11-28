@@ -10,10 +10,13 @@ struct S_CommonTexture {
 	vec4 v_TintColor;
 	mat4 v_ViewProjection;
 	mat4 v_Model;
-	int  v_FlipY;
 };
 
-layout(std430, binding = 0) buffer v_CommonBuffer {
+layout(std140, binding = 0) uniform CommonData {
+	int v_FlipY;
+};
+
+layout(std430, binding = 1) buffer v_CommonBuffer {
 	S_CommonTexture v_Data[];
 };
 
@@ -27,6 +30,7 @@ void main()
 
 	f_TintColor = vertex.v_TintColor;
 	f_TexCoord  = vertex.v_Src.xy + aTexCoord * vertex.v_Src.zw;
-	f_FlipY     = vertex.v_FlipY;
 	gl_Position = vertex.v_ViewProjection * vertex.v_Model * vec4(aPos, 0.0, 1.0);
+	
+	f_FlipY     = v_FlipY;
 }
