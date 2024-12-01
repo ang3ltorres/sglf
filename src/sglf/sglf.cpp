@@ -716,22 +716,57 @@ void Texture::draw()
 #pragma region SPRITE
 
 Sprite::Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst)
-: texture(texture), src(src), dst(dst)
+: texture(texture), src(src), dst(dst), color({255, 255, 255, 255}), rotation(0.0f)
 {
-	rotation = 0.0f;
-	color = {255, 255, 255, 255};
+	updateModel();
+}
+
+void Sprite::updateModel()
+{
+	model = {translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))};
+}
+
+void Sprite::setSrcRect(glm::ivec4 src)
+{
+	this->src = src;
+	updateModel();
+}
+
+void Sprite::setDstRect(glm::ivec4 dst)
+{
+	this->dst = dst;
+	updateModel();
+}
+
+void Sprite::setPosition(glm::ivec2 position)
+{
+	dst.x = position.x;
+	dst.y = position.y;
+	updateModel();
+}
+
+void Sprite::setSize(glm::ivec2 size)
+{
+	dst.z = size.x;
+	dst.w = size.y;
+	updateModel();
+}
+
+void Sprite::setRotation(float rotation)
+{
+	this->rotation = rotation;
+	updateModel();
 }
 
 void Sprite::batch()
 {
-	if (texture) {
-		texture->SSBO_Data[texture->currentInstance++] = {
-			{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}, float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
-			{color.getVec4()},
-			{Graphics::currentCamera->getViewProjectionMatrix()},
-			{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
-		};
-	}
+	texture->SSBO_Data[texture->currentInstance++] =
+	{
+		{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}, float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
+		{color.getVec4()},
+		{Graphics::currentCamera->getViewProjectionMatrix()},
+		{model},
+	};
 }
 
 #pragma endregion SPRITE

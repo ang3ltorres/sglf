@@ -239,6 +239,15 @@ namespace sglf
 		glm::ivec4 dst;
 		Color color;
 		float rotation;
+		glm::mat4 model;
+
+		void updateModel();
+		void setSrcRect(glm::ivec4 src);
+		void setDstRect(glm::ivec4 dst);
+
+		void setPosition(glm::ivec2 position);
+		void setSize(glm::ivec2 size);
+		void setRotation(float rotation);
 
 		void batch();
 	};

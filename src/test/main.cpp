@@ -21,10 +21,10 @@ int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
 		// Update logic
 		if (sglf::Input::down[1]) sound->play();
 
-		if (sglf::Input::up[0]) sprite->dst.y--;
-		if (sglf::Input::down[0]) sprite->dst.y++;
-		if (sglf::Input::left[0]) sprite->dst.x--;
-		if (sglf::Input::right[0]) sprite->dst.x++;
+		if (sglf::Input::up[0])    { sprite->dst.y--; sprite->updateModel(); }
+		if (sglf::Input::down[0])  { sprite->dst.y++; sprite->updateModel(); }
+		if (sglf::Input::left[0])  { sprite->dst.x--; sprite->updateModel(); }
+		if (sglf::Input::right[0]) { sprite->dst.x++; sprite->updateModel(); }
 
 		// Render to target
 		sglf::Graphics::setRenderTexture(renderTexture);
@@ -38,24 +38,6 @@ int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
 		sglf::Graphics::clearScreen({255, 143, 119, 255});
 		renderTexture->batch();
 		renderTexture->texture->draw();
-
-		auto oldPos = sprite->dst;
-		sprite->dst.x += 256;
-		sprite->dst.y += 256;
-		sprite->dst.z /= 2;
-		sprite->dst.w /= 2;
-		sprite->batch();
-
-		sprite->dst = oldPos;
-		sprite->dst.x += 256;
-		sprite->dst.y -= 128;
-		sprite->dst.z *= 2;
-		sprite->dst.w *= 2;
-		sprite->batch();
-
-		sprite->texture->draw();
-
-		sprite->dst = oldPos;
 		
 		sglf::endFrame();
 	}
