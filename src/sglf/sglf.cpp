@@ -73,7 +73,7 @@ PFNGLACTIVETEXTUREPROC glActiveTexture;
 
 vec4 Color::getVec4() const
 {
-	return glm::vec4({r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f});
+	return vec4({r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f});
 }
 
 #pragma endregion COLOR
@@ -715,7 +715,7 @@ void Texture::draw()
 
 #pragma region SPRITE
 
-Sprite::Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst)
+Sprite::Sprite(Texture *texture, ivec4 src, ivec4 dst)
 : texture(texture), src(src), dst(dst), color({255, 255, 255, 255}), rotation(0.0f)
 {
 	updateModel();
@@ -726,26 +726,26 @@ void Sprite::updateModel()
 	model = {translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))};
 }
 
-void Sprite::setSrcRect(glm::ivec4 src)
+void Sprite::setSrcRect(ivec4 src)
 {
 	this->src = src;
 	updateModel();
 }
 
-void Sprite::setDstRect(glm::ivec4 dst)
+void Sprite::setDstRect(ivec4 dst)
 {
 	this->dst = dst;
 	updateModel();
 }
 
-void Sprite::setPosition(glm::ivec2 position)
+void Sprite::setPosition(ivec2 position)
 {
 	dst.x = position.x;
 	dst.y = position.y;
 	updateModel();
 }
 
-void Sprite::setSize(glm::ivec2 size)
+void Sprite::setSize(ivec2 size)
 {
 	dst.z = size.x;
 	dst.w = size.y;
