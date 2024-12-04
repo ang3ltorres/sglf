@@ -20,8 +20,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	sglf::Window::resizedCallback = &resized;
 	
 	sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};
-	sglf::Texture       *textureAtlas  = new sglf::Texture{"H:/sglf_res/kirby.png"};
-	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 23, 22}, {0, 0, 23 * 8, 22 * 8}};
+	sglf::Texture       *textureAtlas  = new sglf::Texture{"H:/sglf_res/png_test.png"};
+	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
 	sglf::Sound         *sound         = new sglf::Sound{"H:/sglf_res/coin.ogg"};
 
 	while (!sglf::Window::shouldClose())

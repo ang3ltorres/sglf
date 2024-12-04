@@ -148,22 +148,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Window::initialize(int width, int height, const char *title, HINSTANCE hInstance)
 {
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-
 	Window::forceClose = false;
 	Window::resizedCallback = nullptr;
 	Window::width = width;
 	Window::height = height;
 
 	ZeroMemory(&windowClass, sizeof(WNDCLASSEXA));
-	windowClass.cbSize = sizeof(WNDCLASSEXA);
+	windowClass.cbSize        = sizeof(WNDCLASSEXA);
 	windowClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
-	windowClass.hInstance = hInstance;
-	windowClass.lpfnWndProc = WindowProc;
+	windowClass.hInstance     = hInstance;
+	windowClass.lpfnWndProc   = WindowProc;
 	windowClass.lpszClassName = "MainWindow";
-	windowClass.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-	windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	windowClass.style = CS_HREDRAW | CS_VREDRAW;
+	windowClass.hIcon         = LoadIcon(nullptr, IDI_APPLICATION);
+	windowClass.hCursor       = LoadCursor(nullptr, IDC_ARROW);
+	windowClass.style         = CS_HREDRAW | CS_VREDRAW;
 
 	RegisterClassExA(&windowClass);
 	RECT rect = { 0, 0, (LONG)Window::width, (LONG)Window::height };
@@ -198,8 +196,6 @@ void Window::finalize()
 {
 	UnregisterClassA(windowClass.lpszClassName, windowClass.hInstance);
 	DestroyWindow(Window::hwnd);
-
-	CoUninitialize();
 }
 
 bool Window::shouldClose()
@@ -1090,6 +1086,7 @@ void Graphics::updateTime()
 
 void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance)
 {
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 	sglf::Window::initialize(width, height, title, hInstance);
 	sglf::Graphics::initialize();
 	sglf::Texture::initialize();
@@ -1102,6 +1099,7 @@ void sglf::finalize()
 	sglf::Texture::finalize();
 	sglf::Graphics::finalize();
 	sglf::Window::finalize();
+	CoUninitialize();
 }
 
 void sglf::endFrame()
