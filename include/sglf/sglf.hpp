@@ -96,7 +96,7 @@ namespace sglf
 		Window(const Window&) = delete;
 		~Window() = default;
 
-		static void initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow);
+		static void initialize(int width, int height, const char *title, HINSTANCE hInstance);
 		static void finalize();
 
 		static bool shouldClose();
@@ -314,7 +314,7 @@ namespace sglf
 		static void setViewport(unsigned int width, unsigned int height);
 	};
 
-	void initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow);
+	void initialize(int width, int height, const char *title, HINSTANCE hInstance);
 	void finalize();
 	void endFrame();
 }

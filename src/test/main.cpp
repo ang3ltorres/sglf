@@ -7,15 +7,16 @@ static void resized(unsigned int width, unsigned int height)
 	sglf::Graphics::defaultCamera->height = height;
 }
 
-int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+	UNREFERENCED_PARAMETER(nCmdShow);
 
 	unsigned int width = 800;
 	unsigned int height = 600;
 	
-	sglf::initialize(width, height, "OpenGL", hInstance, nCmdShow);
+	sglf::initialize(width, height, "OpenGL", hInstance);
 	sglf::Window::resizedCallback = &resized;
 	
 	sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};

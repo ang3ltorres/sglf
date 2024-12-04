@@ -146,7 +146,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-void Window::initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow)
+void Window::initialize(int width, int height, const char *title, HINSTANCE hInstance)
 {
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
@@ -841,6 +841,27 @@ void Graphics::loadExtensionsWGL()
 		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
 		.iPixelType = PFD_TYPE_RGBA,
 		.cColorBits = 24,
+		.cRedBits = 0,
+		.cRedShift = 0,
+		.cGreenBits = 0,
+		.cGreenShift = 0,
+		.cBlueBits = 0,
+		.cBlueShift = 0,
+		.cAlphaBits = 0,
+		.cAlphaShift = 0,
+		.cAccumBits = 0,
+		.cAccumRedBits = 0,
+		.cAccumGreenBits = 0,
+		.cAccumBlueBits = 0,
+		.cAccumAlphaBits = 0,
+		.cDepthBits = 0,
+		.cStencilBits = 0,
+		.cAuxBuffers = 0,
+		.iLayerType = 0,
+		.bReserved = 0,
+		.dwLayerMask = 0,
+		.dwVisibleMask = 0,
+		.dwDamageMask = 0,
 	};
 
 	int format = ChoosePixelFormat(dc, &desc);
@@ -852,11 +873,10 @@ void Graphics::loadExtensionsWGL()
 	HGLRC rc = wglCreateContext(dc);
 
 	wglMakeCurrent(dc, rc);
-
-	wglGetExtensionsStringARB  = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-	wglChoosePixelFormatARB    = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-	wglSwapIntervalEXT         = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+	wglGetExtensionsStringARB  = (PFNWGLGETEXTENSIONSSTRINGARBPROC)(void*)wglGetProcAddress("wglGetExtensionsStringARB");
+	wglChoosePixelFormatARB    = (PFNWGLCHOOSEPIXELFORMATARBPROC)(void*)wglGetProcAddress("wglChoosePixelFormatARB");
+	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(void*)wglGetProcAddress("wglCreateContextAttribsARB");
+	wglSwapIntervalEXT         = (PFNWGLSWAPINTERVALEXTPROC)(void*)wglGetProcAddress("wglSwapIntervalEXT");
 
 	wglMakeCurrent(nullptr, nullptr);
 	wglDeleteContext(rc);
@@ -866,45 +886,45 @@ void Graphics::loadExtensionsWGL()
 
 void Graphics::loadExtensionsGL()
 {
-	glCreateBuffers               = (PFNGLCREATEBUFFERSPROC)wglGetProcAddress("glCreateBuffers");
-	glNamedBufferStorage          = (PFNGLNAMEDBUFFERSTORAGEPROC)wglGetProcAddress("glNamedBufferStorage");
-	glBindVertexArray             = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
-	glCreateVertexArrays          = (PFNGLCREATEVERTEXARRAYSPROC)wglGetProcAddress("glCreateVertexArrays");
-	glVertexArrayAttribBinding    = (PFNGLVERTEXARRAYATTRIBBINDINGPROC)wglGetProcAddress("glVertexArrayAttribBinding");
-	glVertexArrayVertexBuffer     = (PFNGLVERTEXARRAYVERTEXBUFFERPROC)wglGetProcAddress("glVertexArrayVertexBuffer");
-	glVertexArrayAttribFormat     = (PFNGLVERTEXARRAYATTRIBFORMATPROC)wglGetProcAddress("glVertexArrayAttribFormat");
-	glEnableVertexArrayAttrib     = (PFNGLENABLEVERTEXARRAYATTRIBPROC)wglGetProcAddress("glEnableVertexArrayAttrib");
-	glGetProgramiv                = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
-	glGetProgramInfoLog           = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
-	glCreateTextures              = (PFNGLCREATETEXTURESPROC)wglGetProcAddress("glCreateTextures");
-	glTextureParameteri           = (PFNGLTEXTUREPARAMETERIPROC)wglGetProcAddress("glTextureParameteri");
-	glTextureStorage2D            = (PFNGLTEXTURESTORAGE2DPROC)wglGetProcAddress("glTextureStorage2D");
-	glTextureSubImage2D           = (PFNGLTEXTURESUBIMAGE2DPROC)wglGetProcAddress("glTextureSubImage2D");
-	glDeleteFramebuffers          = (PFNGLDELETEFRAMEBUFFERSPROC)wglGetProcAddress("glDeleteFramebuffers");
-	glBindFramebuffer             = (PFNGLBINDFRAMEBUFFERPROC)wglGetProcAddress("glBindFramebuffer");
-	glCreateShader                = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
-	glShaderSource                = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
-	glCompileShader               = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
-	glGetShaderiv                 = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
-	glGetShaderInfoLog            = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
-	glCreateProgram               = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
-	glAttachShader                = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
-	glLinkProgram                 = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
-	glDeleteShader                = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
-	glDeleteProgram               = (PFNGLDELETEPROGRAMPROC)wglGetProcAddress("glDeleteProgram");
-	glUseProgram                  = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
-	glClearTexSubImage            = (PFNGLCLEARTEXSUBIMAGEPROC)wglGetProcAddress("glClearTexSubImage");
-	glVertexArrayElementBuffer    = (PFNGLVERTEXARRAYELEMENTBUFFERPROC)wglGetProcAddress("glVertexArrayElementBuffer");
-	glDeleteVertexArrays          = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
-	glDeleteBuffers               = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
-	glNamedBufferData             = (PFNGLNAMEDBUFFERDATAPROC)wglGetProcAddress("glNamedBufferData");
-	glBufferSubData               = (PFNGLBUFFERSUBDATAPROC)wglGetProcAddress("glBufferSubData");
-	glBindBufferBase              = (PFNGLBINDBUFFERBASEPROC)wglGetProcAddress("glBindBufferBase");
-	glCreateFramebuffers          = (PFNGLCREATEFRAMEBUFFERSPROC)wglGetProcAddress("glCreateFramebuffers");
-	glNamedFramebufferTexture     = (PFNGLNAMEDFRAMEBUFFERTEXTUREPROC)wglGetProcAddress("glNamedFramebufferTexture");
-	glNamedFramebufferDrawBuffers = (PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC)wglGetProcAddress("glNamedFramebufferDrawBuffers");
-	glDrawElementsInstanced       = (PFNGLDRAWELEMENTSINSTANCEDPROC)wglGetProcAddress("glDrawElementsInstanced");
-	glActiveTexture               = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
+	glCreateBuffers               = (PFNGLCREATEBUFFERSPROC)(void*)wglGetProcAddress("glCreateBuffers");
+	glNamedBufferStorage          = (PFNGLNAMEDBUFFERSTORAGEPROC)(void*)wglGetProcAddress("glNamedBufferStorage");
+	glBindVertexArray             = (PFNGLBINDVERTEXARRAYPROC)(void*)wglGetProcAddress("glBindVertexArray");
+	glCreateVertexArrays          = (PFNGLCREATEVERTEXARRAYSPROC)(void*)wglGetProcAddress("glCreateVertexArrays");
+	glVertexArrayAttribBinding    = (PFNGLVERTEXARRAYATTRIBBINDINGPROC)(void*)wglGetProcAddress("glVertexArrayAttribBinding");
+	glVertexArrayVertexBuffer     = (PFNGLVERTEXARRAYVERTEXBUFFERPROC)(void*)wglGetProcAddress("glVertexArrayVertexBuffer");
+	glVertexArrayAttribFormat     = (PFNGLVERTEXARRAYATTRIBFORMATPROC)(void*)wglGetProcAddress("glVertexArrayAttribFormat");
+	glEnableVertexArrayAttrib     = (PFNGLENABLEVERTEXARRAYATTRIBPROC)(void*)wglGetProcAddress("glEnableVertexArrayAttrib");
+	glGetProgramiv                = (PFNGLGETPROGRAMIVPROC)(void*)wglGetProcAddress("glGetProgramiv");
+	glGetProgramInfoLog           = (PFNGLGETPROGRAMINFOLOGPROC)(void*)wglGetProcAddress("glGetProgramInfoLog");
+	glCreateTextures              = (PFNGLCREATETEXTURESPROC)(void*)wglGetProcAddress("glCreateTextures");
+	glTextureParameteri           = (PFNGLTEXTUREPARAMETERIPROC)(void*)wglGetProcAddress("glTextureParameteri");
+	glTextureStorage2D            = (PFNGLTEXTURESTORAGE2DPROC)(void*)wglGetProcAddress("glTextureStorage2D");
+	glTextureSubImage2D           = (PFNGLTEXTURESUBIMAGE2DPROC)(void*)wglGetProcAddress("glTextureSubImage2D");
+	glDeleteFramebuffers          = (PFNGLDELETEFRAMEBUFFERSPROC)(void*)wglGetProcAddress("glDeleteFramebuffers");
+	glBindFramebuffer             = (PFNGLBINDFRAMEBUFFERPROC)(void*)wglGetProcAddress("glBindFramebuffer");
+	glCreateShader                = (PFNGLCREATESHADERPROC)(void*)wglGetProcAddress("glCreateShader");
+	glShaderSource                = (PFNGLSHADERSOURCEPROC)(void*)wglGetProcAddress("glShaderSource");
+	glCompileShader               = (PFNGLCOMPILESHADERPROC)(void*)wglGetProcAddress("glCompileShader");
+	glGetShaderiv                 = (PFNGLGETSHADERIVPROC)(void*)wglGetProcAddress("glGetShaderiv");
+	glGetShaderInfoLog            = (PFNGLGETSHADERINFOLOGPROC)(void*)wglGetProcAddress("glGetShaderInfoLog");
+	glCreateProgram               = (PFNGLCREATEPROGRAMPROC)(void*)wglGetProcAddress("glCreateProgram");
+	glAttachShader                = (PFNGLATTACHSHADERPROC)(void*)wglGetProcAddress("glAttachShader");
+	glLinkProgram                 = (PFNGLLINKPROGRAMPROC)(void*)wglGetProcAddress("glLinkProgram");
+	glDeleteShader                = (PFNGLDELETESHADERPROC)(void*)wglGetProcAddress("glDeleteShader");
+	glDeleteProgram               = (PFNGLDELETEPROGRAMPROC)(void*)wglGetProcAddress("glDeleteProgram");
+	glUseProgram                  = (PFNGLUSEPROGRAMPROC)(void*)wglGetProcAddress("glUseProgram");
+	glClearTexSubImage            = (PFNGLCLEARTEXSUBIMAGEPROC)(void*)wglGetProcAddress("glClearTexSubImage");
+	glVertexArrayElementBuffer    = (PFNGLVERTEXARRAYELEMENTBUFFERPROC)(void*)wglGetProcAddress("glVertexArrayElementBuffer");
+	glDeleteVertexArrays          = (PFNGLDELETEVERTEXARRAYSPROC)(void*)wglGetProcAddress("glDeleteVertexArrays");
+	glDeleteBuffers               = (PFNGLDELETEBUFFERSPROC)(void*)wglGetProcAddress("glDeleteBuffers");
+	glNamedBufferData             = (PFNGLNAMEDBUFFERDATAPROC)(void*)wglGetProcAddress("glNamedBufferData");
+	glBufferSubData               = (PFNGLBUFFERSUBDATAPROC)(void*)wglGetProcAddress("glBufferSubData");
+	glBindBufferBase              = (PFNGLBINDBUFFERBASEPROC)(void*)wglGetProcAddress("glBindBufferBase");
+	glCreateFramebuffers          = (PFNGLCREATEFRAMEBUFFERSPROC)(void*)wglGetProcAddress("glCreateFramebuffers");
+	glNamedFramebufferTexture     = (PFNGLNAMEDFRAMEBUFFERTEXTUREPROC)(void*)wglGetProcAddress("glNamedFramebufferTexture");
+	glNamedFramebufferDrawBuffers = (PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC)(void*)wglGetProcAddress("glNamedFramebufferDrawBuffers");
+	glDrawElementsInstanced       = (PFNGLDRAWELEMENTSINSTANCEDPROC)(void*)wglGetProcAddress("glDrawElementsInstanced");
+	glActiveTexture               = (PFNGLACTIVETEXTUREPROC)(void*)wglGetProcAddress("glActiveTexture");
 }
 
 void Graphics::initialize()
@@ -930,12 +950,34 @@ void Graphics::initialize()
 	Graphics::dc = GetDC(Window::hwnd);
 	wglChoosePixelFormatARB(Graphics::dc, piAttribIList, nullptr, 1, &format, &formats);
 
-	PIXELFORMATDESCRIPTOR desc = {
+	PIXELFORMATDESCRIPTOR desc =
+	{
 		.nSize = sizeof(PIXELFORMATDESCRIPTOR),
 		.nVersion = 1,
 		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
 		.iPixelType = PFD_TYPE_RGBA,
 		.cColorBits = 24,
+		.cRedBits = 0,
+		.cRedShift = 0,
+		.cGreenBits = 0,
+		.cGreenShift = 0,
+		.cBlueBits = 0,
+		.cBlueShift = 0,
+		.cAlphaBits = 0,
+		.cAlphaShift = 0,
+		.cAccumBits = 0,
+		.cAccumRedBits = 0,
+		.cAccumGreenBits = 0,
+		.cAccumBlueBits = 0,
+		.cAccumAlphaBits = 0,
+		.cDepthBits = 0,
+		.cStencilBits = 0,
+		.cAuxBuffers = 0,
+		.iLayerType = 0,
+		.bReserved = 0,
+		.dwLayerMask = 0,
+		.dwVisibleMask = 0,
+		.dwDamageMask = 0,
 	};
 
 	DescribePixelFormat(Graphics::dc, format, sizeof(PIXELFORMATDESCRIPTOR), &desc);
@@ -1046,9 +1088,9 @@ void Graphics::updateTime()
 
 #pragma endregion GRAPHICS
 
-void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance, int nCmdShow)
+void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance)
 {
-	sglf::Window::initialize(width, height, "OpenGL", hInstance, nCmdShow);
+	sglf::Window::initialize(width, height, title, hInstance);
 	sglf::Graphics::initialize();
 	sglf::Texture::initialize();
 	sglf::Sound::initialize();
