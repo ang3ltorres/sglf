@@ -110,11 +110,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		case WM_SIZE:
 		{
-			RECT rc;
+			static RECT rc;
 
 			GetClientRect(Window::hwnd, &rc);
 
-			Window::width = rc.right - rc.left;
+			Window::width  = rc.right - rc.left;
 			Window::height = rc.bottom - rc.top;
 
 			if (Window::resizedCallback)
@@ -166,7 +166,7 @@ void Window::initialize(int width, int height, const char *title, HINSTANCE hIns
 	windowClass.style = CS_HREDRAW | CS_VREDRAW;
 
 	RegisterClassExA(&windowClass);
-	RECT rect = { 0, 0, {Window::width}, {Window::height} };
+	RECT rect = { 0, 0, (LONG)Window::width, (LONG)Window::height };
 	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW);
 
 	// Calculate window position to center it on the screen
@@ -388,7 +388,7 @@ static char* readFile(const char *fileName)
 	return text;
 }
 
-static GLuint compileShader(unsigned int type, const char *source)
+static GLuint compileShader(GLenum type, const char *source)
 {
 	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, &source, nullptr);
@@ -762,7 +762,7 @@ void Sprite::batch()
 {
 	texture->SSBO_Data[texture->currentInstance++] =
 	{
-		{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}, float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
+		{(float)src.x / (float)texture->width, (float)src.y / (float)texture->height, (float)src.z / (float)texture->width, (float)src.w / (float)texture->height},
 		{color.getVec4()},
 		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{model},
@@ -802,7 +802,7 @@ RenderTexture::~RenderTexture()
 void RenderTexture::batch()
 {
 	texture->SSBO_Data[texture->currentInstance++] = {
-		{float{src.x} / float{texture->width}, float{src.y} / float{texture->height}, float{src.z} / float{texture->width}, float{src.w} / float{texture->height}},
+		{(float)src.x / (float)texture->width, (float)src.y / (float)texture->height, (float)src.z / (float)texture->width, (float)src.w / (float)texture->height},
 		{color.getVec4()},
 		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
@@ -987,7 +987,7 @@ void Graphics::finalize()
 
 void Graphics::clearScreen(const Color &color)
 {
-	glClearColor(float{color.r} / 255.0f, float{color.g} / 255.0f, float{color.b} / 255.0f, float{color.a} / 255.0f);
+	glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 

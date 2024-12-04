@@ -1,6 +1,12 @@
 #include <sglf/sglf.hpp>
 #include <cstdio>
 
+static void resized(unsigned int width, unsigned int height)
+{
+	sglf::Graphics::defaultCamera->width  = width;
+	sglf::Graphics::defaultCamera->height = height;
+}
+
 int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
@@ -10,11 +16,12 @@ int WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
 	unsigned int height = 600;
 	
 	sglf::initialize(width, height, "OpenGL", hInstance, nCmdShow);
+	sglf::Window::resizedCallback = &resized;
 	
 	sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};
-	sglf::Texture *textureAtlas = new sglf::Texture{"H:/sglf_res/kirby.png"};
-	sglf::Sprite *sprite = new sglf::Sprite{textureAtlas, {0, 0, 23, 22}, {0, 0, 23 * 8, 22 * 8}};
-	sglf::Sound *sound = new sglf::Sound{"H:/sglf_res/coin.ogg"};
+	sglf::Texture       *textureAtlas  = new sglf::Texture{"H:/sglf_res/kirby.png"};
+	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 23, 22}, {0, 0, 23 * 8, 22 * 8}};
+	sglf::Sound         *sound         = new sglf::Sound{"H:/sglf_res/coin.ogg"};
 
 	while (!sglf::Window::shouldClose())
 	{
