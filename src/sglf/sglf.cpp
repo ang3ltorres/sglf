@@ -13,6 +13,9 @@
 // GLM
 #include <glm/gtc/type_ptr.hpp>
 
+// FREETYPE
+#include <freetype/freetype.h>
+
 using namespace glm;
 using namespace sglf;
 
@@ -809,13 +812,36 @@ void RenderTexture::batch()
 
 #pragma region FONT
 
-void Font::initialize(const char **customFonts)
+Font::Font(const char *fileName, const char *name)
 {
+	this->fileName = new char[strlen(fileName) + 1];
+	strcpy(this->fileName, fileName);
 
+	AddFontResourceEx(fileName, FR_PRIVATE, nullptr);
+	font = CreateFontA
+	(
+		48,
+		0,
+		0,
+		0,
+		FW_DONTCARE,
+		FALSE,
+		FALSE,
+		FALSE,
+		ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		NONANTIALIASED_QUALITY,
+		DEFAULT_PITCH | FF_DONTCARE,
+		name
+	);
 }
 
-void Font::finalize()
+Font::~Font()
 {
+	DeleteObject(font);
+	RemoveFontResourceEx(fileName, FR_PRIVATE, NULL);
+	delete[] fileName;
 }
 
 #pragma endregion FONT
@@ -885,7 +911,6 @@ void Graphics::loadExtensionsWGL()
 	int format = ChoosePixelFormat(dc, &desc);
 	DescribePixelFormat(dc, format, sizeof(PIXELFORMATDESCRIPTOR), &desc);
 
-	// reason to create dummy window is that SetPixelFormat can be called only once for the window
 	SetPixelFormat(dc, format, &desc);
 
 	HGLRC rc = wglCreateContext(dc);
@@ -972,7 +997,7 @@ void Graphics::initialize()
 	{
 		.nSize = sizeof(PIXELFORMATDESCRIPTOR),
 		.nVersion = 1,
-		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI | PFD_DOUBLEBUFFER,
 		.iPixelType = PFD_TYPE_RGBA,
 		.cColorBits = 24,
 		.cRedBits = 0,

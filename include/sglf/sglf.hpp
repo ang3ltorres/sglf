@@ -274,12 +274,12 @@ namespace sglf
 	class Font
 	{
 	public:
-		Font() = delete;
+		Font(const char *fileName, const char *name);
 		Font(const Font&) = delete;
-		~Font() = default;
+		~Font();
 
-		static void initialize(const char **customFonts);
-		static void finalize();
+		HFONT font;
+		char *fileName;
 	};
 
 	class Text
