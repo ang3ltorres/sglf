@@ -271,6 +271,25 @@ namespace sglf
 		Camera *camera;
 	};
 
+	class Font
+	{
+	public:
+		Font() = delete;
+		Font(const Font&) = delete;
+		~Font() = default;
+
+		static void initialize(const char **customFonts);
+		static void finalize();
+	};
+
+	class Text
+	{
+	public:
+		Text() = delete;
+		Text(const Text&) = delete;
+		~Text();
+	};
+
 	class Graphics
 	{
 	public:

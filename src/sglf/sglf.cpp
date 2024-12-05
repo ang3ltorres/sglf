@@ -807,6 +807,28 @@ void RenderTexture::batch()
 
 #pragma endregion RENDER_TEXTURE
 
+#pragma region FONT
+
+void Font::initialize(const char **customFonts)
+{
+
+}
+
+void Font::finalize()
+{
+}
+
+#pragma endregion FONT
+
+#pragma region TEXT
+
+Text::~Text()
+{
+
+}
+
+#pragma endregion TEXT
+
 #pragma region GRAPHICS
 
 HGLRC Graphics::rc;
