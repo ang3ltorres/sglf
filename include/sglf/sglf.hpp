@@ -285,9 +285,16 @@ namespace sglf
 	class Text
 	{
 	public:
-		Text() = delete;
+		Text(const char *text, Font *font);
 		Text(const Text&) = delete;
 		~Text();
+
+		void setText(const char *text);
+		void setFont(Font *font);
+		void render();
+
+		char *text;
+		Font *font;
 	};
 
 	class Graphics

@@ -24,6 +24,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
 	sglf::Sound         *sound         = new sglf::Sound{"H:/sglf_res/coin.ogg"};
 	sglf::Font          *font          = new sglf::Font{"H:/sglf_res/Minecraft.ttf", "Minecraft"};
+	sglf::Text          *text          = new sglf::Text{"UwU", font};
 
 	while (!sglf::Window::shouldClose())
 	{
@@ -47,10 +48,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		sglf::Graphics::clearScreen({255, 143, 119, 255});
 		renderTexture->batch();
 		renderTexture->texture->draw();
+
+		text->render();
 		
 		sglf::endFrame();
 	}
 
+	delete text;
 	delete font;
 	delete sound;
 	delete sprite;

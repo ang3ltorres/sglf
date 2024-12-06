@@ -848,10 +848,62 @@ Font::~Font()
 
 #pragma region TEXT
 
+Text::Text(const char *text, Font *font)
+: text(nullptr), font(nullptr)
+{
+	setText(text);
+	setFont(font);
+}
+
 Text::~Text()
 {
-
+	delete text;
 }
+
+void Text::setText(const char *text)
+{
+	delete this->text;
+	this->text = new char[strlen(text) + 1];
+	strcpy(this->text, text);
+}
+
+void Text::setFont(Font *font)
+{
+	this->font = font;
+}
+
+void Text::render()
+{
+	HDC dc = CreateCompatibleDC(Graphics::dc);
+	HBITMAP bitmap = CreateCompatibleBitmap(dc, 100, 50);
+	SelectObject(dc, bitmap);
+
+	SelectObject(dc, font);
+	SetTextColor(dc, RGB(255, 0, 255));
+	SetBkColor(dc, RGB(0, 0, 0));
+	SetBkMode(dc, OPAQUE);
+
+	RECT rect = { 0, 0, 100, 50 };
+	DrawTextA(dc, text, -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+	BITMAPINFO bmi = {};
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = 100;
+	bmi.bmiHeader.biHeight = -50; // Negative height for top-down bitmap
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 32;   // 32-bit to include alpha
+	bmi.bmiHeader.biCompression = BI_RGB;
+
+	unsigned char* buffer = new unsigned char[100 * 50 * 4];
+	auto r = GetDIBits(Graphics::dc, bitmap, 0, 50, buffer, &bmi, DIB_RGB_COLORS);
+
+
+	for (int i = 0; i < 100 * 50 * 4; i += 4)
+		printf("%u\t", buffer[i]);
+
+	// printf("\n\n");
+}
+
 
 #pragma endregion TEXT
 
