@@ -31,7 +31,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
 	sglf::Font          *font          = new sglf::Font{"Minecraft", 128, sglf::Font::Style::Regular, true};
-	sglf::Text          *text          = new sglf::Text{"ABCDE", font};
+	sglf::Text          *text          = new sglf::Text{"ABCD", font};
 
 	while (!sglf::Window::shouldClose())
 	{
@@ -44,17 +44,17 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		if (sglf::Input::right[0]) { sprite->dst.x++; sprite->updateModel(); }
 
 		// Render to target
-		// sglf::Graphics::setRenderTexture(renderTexture);
-		// sglf::Graphics::clearScreen({255, 255, 255, 255});
+		sglf::Graphics::setRenderTexture(renderTexture);
+		sglf::Graphics::clearScreen({255, 255, 255, 255});
 
-		// sprite->batch();
-		// sprite->texture->draw();
+		sprite->batch();
+		sprite->texture->draw();
 
 		// Render to default "canvas"
 		sglf::Graphics::setRenderTexture();
 		sglf::Graphics::clearScreen({255, 143, 119, 255});
-		// renderTexture->batch();
-		// renderTexture->texture->draw();
+		renderTexture->batch();
+		renderTexture->texture->draw();
 
 		text->draw();
 

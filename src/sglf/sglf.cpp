@@ -648,6 +648,7 @@ Texture::Texture(const char *fileName, unsigned int maxInstances)
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
 	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -987,6 +988,7 @@ void Text::render(bool freeOldTexture)
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &id);
 		glTextureStorage2D(id, 1, GL_R8, width, height);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Fix non multiple of 4 texture size
 		glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, pixelData);
 		glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1004,7 +1006,7 @@ void Text::draw()
 	Graphics::setTexture(id);
 
 	dst = {0, 0, width, height};
-	color = {0, 255, 255, 255};
+	color = {0, 0, 0, 255};
 	model = scale(mat4(1.0f), vec3(width, height, 1.0f));
 
 	SSBO_Data =
