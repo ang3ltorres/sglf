@@ -934,6 +934,11 @@ void Text::render(bool freeOldTexture)
 {
 	unsigned char *pixelData;
 
+	/*
+	todo
+	fix texture opengl dind tlike the non power of 2 tetxures :CCCCCC
+	*/
+
 	//& GDI+
 	{
 		// *Convert input strings to wide strings
@@ -950,7 +955,7 @@ void Text::render(bool freeOldTexture)
 		// *Create bitmap for rendering the text
 		Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
 		Gdiplus::Graphics graphics(&bitmap);
-		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 255));
+		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 255, 255, 255));
 		graphics.Clear(Gdiplus::Color(255, 0, 0, 0));
 		graphics.SetTextRenderingHint(Gdiplus::TextRenderingHint::TextRenderingHintSingleBitPerPixelGridFit);
 		graphics.DrawString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &brush);
@@ -968,7 +973,7 @@ void Text::render(bool freeOldTexture)
 
 		// *Convert ARGB to single channel
 		for (unsigned int i = 0; i < totalPixels; i++)
-			pixelData[i] = pixelsARGB[i];
+			pixelData[i] = (pixelsARGB[i] >> 16) & 0xFF;;
 
 		// *Cleanup resources
 		bitmap.UnlockBits(&bitmapData);
@@ -989,16 +994,6 @@ void Text::render(bool freeOldTexture)
 		glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	dst = {0, 0, width, height};
-	color = {255, 0, 0, 255};
-
-	for (unsigned int i = 0; i < height; i++)
-	{
-		for (unsigned int j = 0; j < width; j++)
-			printf("%c", pixelData[i * width + j] ? 219 : 32);
-		printf("\n");
-	}
-
 	delete[] pixelData;
 }
 
@@ -1008,7 +1003,9 @@ void Text::draw()
 	Graphics::setVAO(Font::VAO);
 	Graphics::setTexture(id);
 
-	model = scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f));
+	dst = {0, 0, width, height};
+	color = {0, 255, 255, 255};
+	model = scale(mat4(1.0f), vec3(width, height, 1.0f));
 
 	SSBO_Data =
 	{
@@ -1016,11 +1013,9 @@ void Text::draw()
 		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{model},
 	};
-
 	
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(S_CommonText), &SSBO_Data);
-
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
