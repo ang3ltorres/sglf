@@ -813,56 +813,6 @@ Gdiplus::GdiplusStartupInput *Font::gdiplusStartupInput;
 ULONG_PTR Font::gdiplusToken;
 Gdiplus::PrivateFontCollection *Font::collection;
 
-static unsigned char* getTextTexture(const char *text, const char *fontFamily, float fontSize, bool custom)
-{
-	// *Convert input strings to wide strings
-	wchar_t *w_text       = toWideString(text);
-	wchar_t *w_fontFamily = toWideString(fontFamily);
-
-	// *Initialize font
-	Gdiplus::Font font(w_fontFamily, fontSize, Gdiplus::FontStyle::FontStyleRegular, Gdiplus::Unit::UnitPixel, custom ? Font::collection : nullptr);
-
-	// *Calculate the size required for the text
-	Gdiplus::Bitmap tempBitmap(1, 1);
-	Gdiplus::Graphics tempGraphics(&tempBitmap);
-	Gdiplus::RectF bounds;
-	tempGraphics.MeasureString(w_text, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &bounds);
-	int width  = (int)std::ceil(bounds.Width);
-	int height = (int)std::ceil(bounds.Height);
-
-	// *Create bitmap for rendering the text
-	Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
-	Gdiplus::Graphics graphics(&bitmap);
-	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 255));
-	graphics.Clear(Gdiplus::Color(255, 0, 0, 0));
-	graphics.SetTextRenderingHint(Gdiplus::TextRenderingHint::TextRenderingHintSingleBitPerPixelGridFit);
-	graphics.DrawString(w_text, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &brush);
-
-	// *Retrieve raw pixel data
-	Gdiplus::BitmapData bitmapData;
-	Gdiplus::Rect rect(0, 0, width, height);
-	bitmap.LockBits(&rect, Gdiplus::ImageLockMode::ImageLockModeRead, PixelFormat32bppARGB, &bitmapData);
-
-	unsigned int *pixelsARGB = (unsigned int*)bitmapData.Scan0;
-	unsigned int totalPixels = width * height;
-
-	// *Allocate memory
-	unsigned char *pixels = new unsigned char[totalPixels];
-
-	// *Convert ARGB to single channel
-	for (unsigned int i = 0; i < totalPixels; i++) {
-			pixels[i] = pixelsARGB[i];
-	}
-
-	// *Cleanup resources
-	bitmap.UnlockBits(&bitmapData);
-	delete[] w_fontFamily;
-	delete[] w_text;
-
-	// Return raw pixel data (caller must free this memory)
-	return pixels;
-}
-
 void Font::initialize(const char *fonts[])
 {
 	Font::gdiplusStartupInput = new Gdiplus::GdiplusStartupInput{};
@@ -872,7 +822,7 @@ void Font::initialize(const char *fonts[])
 	if (fonts)
 	{
 		Font::collection = new Gdiplus::PrivateFontCollection{};
-		for (unsigned int i = 0; *fonts[i]; i++)
+		for (unsigned int i = 0; fonts[i][0] != ' '; i++)
 		{
 			wchar_t *w_font = toWideString(fonts[i]);
 			Font::collection->AddFontFile(w_font);
@@ -888,12 +838,21 @@ void Font::finalize()
 	delete Font::gdiplusStartupInput;
 }
 
-Font::Font(const char *fileName, const char *name)
+Font::Font(const char *familyName, float size, Style style, bool custom)
+: size(size), style(style), custom(custom)
 {
+	this->familyName = new char[std::strlen(familyName) + 1];
+	std::strcpy(this->familyName, familyName);
+	wchar_t *w_familyName = toWideString(familyName);
+	gdiFont = new Gdiplus::Font(w_familyName, size, style, Gdiplus::Unit::UnitPixel, (custom ? Font::collection : nullptr));
+	
+	delete[] w_familyName;
 }
 
 Font::~Font()
 {
+	delete[] familyName;
+	delete gdiFont;
 }
 
 #pragma endregion FONT
@@ -901,14 +860,16 @@ Font::~Font()
 #pragma region TEXT
 
 Text::Text(const char *text, Font *font)
-: text(nullptr), font(nullptr)
+: text(nullptr), font(nullptr), pixelData(nullptr)
 {
 	setText(text);
-	setFont(font);
+	this->font = font;
+	render();
 }
 
 Text::~Text()
 {
+	delete pixelData;
 	delete text;
 }
 
@@ -919,16 +880,53 @@ void Text::setText(const char *text)
 	strcpy(this->text, text);
 }
 
-void Text::setFont(Font *font)
-{
-	this->font = font;
-}
-
 void Text::render()
 {
+	// *Convert input strings to wide strings
+	wchar_t *w_text       = toWideString(text);
 
+	// *Calculate the size required for the text
+	Gdiplus::Bitmap tempBitmap(1, 1);
+	Gdiplus::Graphics tempGraphics(&tempBitmap);
+	Gdiplus::RectF bounds;
+	tempGraphics.MeasureString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &bounds);
+	int width  = (int)std::ceil(bounds.Width);
+	int height = (int)std::ceil(bounds.Height);
+
+	// *Create bitmap for rendering the text
+	Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
+	Gdiplus::Graphics graphics(&bitmap);
+	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 255));
+	graphics.Clear(Gdiplus::Color(255, 0, 0, 0));
+	graphics.SetTextRenderingHint(Gdiplus::TextRenderingHint::TextRenderingHintSingleBitPerPixelGridFit);
+	graphics.DrawString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &brush);
+
+	// *Retrieve raw pixel data
+	Gdiplus::BitmapData bitmapData;
+	Gdiplus::Rect rect(0, 0, width, height);
+	bitmap.LockBits(&rect, Gdiplus::ImageLockMode::ImageLockModeRead, PixelFormat32bppARGB, &bitmapData);
+
+	unsigned int *pixelsARGB = (unsigned int*)bitmapData.Scan0;
+	unsigned int totalPixels = width * height;
+
+	// *Allocate memory
+	pixelData = new unsigned char[totalPixels];
+
+	// *Convert ARGB to single channel
+	for (unsigned int i = 0; i < totalPixels; i++)
+		pixelData[i] = pixelsARGB[i];
+
+	// *Cleanup resources
+	bitmap.UnlockBits(&bitmapData);
+	delete[] w_text;
+
+	for (int i = 0; i < height; i++)
+	{
+		for (int j = 0; j < width; j++)
+			printf("%c", pixelData[i * width + j] ? 219 : 32);
+		printf("\n");
+	}
 }
-
 
 #pragma endregion TEXT
 

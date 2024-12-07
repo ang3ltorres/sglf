@@ -276,7 +276,15 @@ namespace sglf
 	class Font
 	{
 	public:
-		Font(const char *fileName, const char *name);
+
+		enum Style
+		{
+			Regular = Gdiplus::FontStyle::FontStyleRegular,
+			Bold    = Gdiplus::FontStyle::FontStyleBold,
+			Italic  = Gdiplus::FontStyle::FontStyleItalic,
+		};
+
+		Font(const char *familyName, float size = 16, Style style = Style::Regular, bool custom = false);
 		Font(const Font&) = delete;
 		~Font();
 
@@ -287,8 +295,11 @@ namespace sglf
 		static ULONG_PTR gdiplusToken;
 		static Gdiplus::PrivateFontCollection *collection;
 
-		HFONT font;
-		char *fileName;
+		char *familyName;
+		float size;
+		Style style;
+		bool custom;
+		Gdiplus::Font *gdiFont;
 	};
 
 	class Text
@@ -299,11 +310,11 @@ namespace sglf
 		~Text();
 
 		void setText(const char *text);
-		void setFont(Font *font);
 		void render();
 
 		char *text;
 		Font *font;
+		unsigned char *pixelData;
 	};
 
 	class Graphics

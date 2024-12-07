@@ -15,15 +15,22 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 	unsigned int width = 800;
 	unsigned int height = 600;
+
+	static const char *fonts[] =
+	{
+		"D:/sglf_res/Minecraft.ttf",
+		"D:/sglf_res/Magic Retro.ttf",
+		" ",
+	};
 	
-	sglf::initialize(width, height, "OpenGL", hInstance);
+	sglf::initialize(width, height, "OpenGL", hInstance, fonts);
 	sglf::Window::resizedCallback = &resized;
 	
 	sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};
 	sglf::Texture       *textureAtlas  = new sglf::Texture{"D:/sglf_res/png_test.png"};
 	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
-	sglf::Font          *font          = new sglf::Font{"D:/sglf_res/Minecraft.ttf", "Minecraft"};
+	sglf::Font          *font          = new sglf::Font{"Minecraft", 32, sglf::Font::Style::Regular, true};
 	sglf::Text          *text          = new sglf::Text{"UwU", font};
 
 	while (!sglf::Window::shouldClose())
@@ -49,8 +56,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		renderTexture->batch();
 		renderTexture->texture->draw();
 
-		text->render();
-		
 		sglf::endFrame();
 	}
 
