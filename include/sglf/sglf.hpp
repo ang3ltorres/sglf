@@ -81,6 +81,13 @@ namespace sglf
 		glm::mat4 u_Model;
 	};
 
+	struct alignas(16) S_CommonText
+	{
+		glm::vec4 u_TintColor;
+		glm::mat4 u_ViewProjection;
+		glm::mat4 u_Model;
+	};
+
 	struct Color
 	{
 		unsigned char r;
@@ -217,13 +224,13 @@ namespace sglf
 		~Texture();
 
 		// Batch
+		GLuint UBO;
+		int flipY;
+
 		GLuint SSBO;
 		S_CommonTexture *SSBO_Data;
 		unsigned int maxInstances;
 		unsigned int currentInstance;
-
-		GLuint UBO;
-		int flipY;
 
 		void draw();
 	};
@@ -231,7 +238,6 @@ namespace sglf
 	class Sprite
 	{
 	public:
-
 		Sprite(const Sprite&) = default;
 		Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst);
 		~Sprite() = default;
@@ -295,6 +301,11 @@ namespace sglf
 		static ULONG_PTR gdiplusToken;
 		static Gdiplus::PrivateFontCollection *collection;
 
+		static Shader *shader;
+		static GLuint VAO;
+		static GLuint VBO;
+		static GLuint EBO;
+
 		char *familyName;
 		float size;
 		Style style;
@@ -310,11 +321,23 @@ namespace sglf
 		~Text();
 
 		void setText(const char *text);
-		void render();
+		void render(bool freeOldTexture = true);
+		void draw();
+
+		GLuint id;
+		GLuint width;
+		GLuint height;
+
+		GLuint SSBO;
+		S_CommonText SSBO_Data;
 
 		char *text;
 		Font *font;
-		unsigned char *pixelData;
+
+		glm::ivec4 dst;
+		Color color;
+		float rotation;
+		glm::mat4 model;
 	};
 
 	class Graphics

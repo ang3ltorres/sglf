@@ -69,6 +69,42 @@ PFNGLACTIVETEXTUREPROC glActiveTexture;
 
 #pragma endregion // &OPENGL EXTENSIONNS
 
+#pragma region MISC
+
+struct Vertex
+{
+	float position[2];
+	float uv[2];
+};
+
+static const Vertex vertices[] = {
+	{ { 0.0f, 0.0f }, { 0.0f, 0.0f } },
+	{ { 1.0f, 0.0f }, { 1.0f, 0.0f } },
+	{ { 0.0f, 1.0f }, { 0.0f, 1.0f } },
+	{ { 1.0f, 1.0f }, { 1.0f, 1.0f } }
+};
+
+static const unsigned int indices[] = {
+	0, 1, 2,
+	1, 2, 3,
+};
+
+static wchar_t* toWideString(const char *string)
+{
+	if (!string)
+		return nullptr;
+
+	int bufferSize = MultiByteToWideChar(CP_UTF8, 0, string, -1, nullptr, 0);
+	if (bufferSize == 0)
+		return nullptr;
+
+	wchar_t *wideString = new wchar_t[bufferSize];
+	MultiByteToWideChar(CP_UTF8, 0, string, -1, wideString, bufferSize);
+	return wideString;
+}
+
+#pragma endregion MISC
+
 #pragma region COLOR
 
 vec4 Color::getVec4() const
@@ -501,43 +537,11 @@ void Camera::updateProjection()
 
 #pragma region TEXTURE
 
-struct Vertex
-{
-	float position[2];
-	float uv[2];
-};
-
-static const Vertex vertices[] = {
-	{ { 0.0f, 0.0f }, { 0.0f, 0.0f } },
-	{ { 1.0f, 0.0f }, { 1.0f, 0.0f } },
-	{ { 0.0f, 1.0f }, { 0.0f, 1.0f } },
-	{ { 1.0f, 1.0f }, { 1.0f, 1.0f } }
-};
-
-static const unsigned int indices[] = {
-	0, 1, 2,
-	1, 2, 3,
-};
-
 IWICImagingFactory *Texture::wicFactory;
 Shader *Texture::shader;
 GLuint Texture::VAO;
 GLuint Texture::VBO;
 GLuint Texture::EBO;
-
-static wchar_t* toWideString(const char *string)
-{
-	if (!string)
-		return nullptr;
-
-	int bufferSize = MultiByteToWideChar(CP_UTF8, 0, string, -1, nullptr, 0);
-	if (bufferSize == 0)
-		return nullptr;
-
-	wchar_t *wideString = new wchar_t[bufferSize];
-	MultiByteToWideChar(CP_UTF8, 0, string, -1, wideString, bufferSize);
-	return wideString;
-}
 
 void Texture::initialize()
 {
@@ -813,15 +817,21 @@ Gdiplus::GdiplusStartupInput *Font::gdiplusStartupInput;
 ULONG_PTR Font::gdiplusToken;
 Gdiplus::PrivateFontCollection *Font::collection;
 
+Shader *Font::shader;
+GLuint Font::VAO;
+GLuint Font::VBO;
+GLuint Font::EBO;
+
 void Font::initialize(const char *fonts[])
 {
 	Font::gdiplusStartupInput = new Gdiplus::GdiplusStartupInput{};
 	Gdiplus::GdiplusStartup(&gdiplusToken, gdiplusStartupInput, nullptr);
 	Font::collection = nullptr;
 	
+	// Load font faces at Font::collection
 	if (fonts)
 	{
-		Font::collection = new Gdiplus::PrivateFontCollection{};
+		Font::collection = new Gdiplus::PrivateFontCollection();
 		for (unsigned int i = 0; fonts[i][0] != ' '; i++)
 		{
 			wchar_t *w_font = toWideString(fonts[i]);
@@ -829,10 +839,45 @@ void Font::initialize(const char *fonts[])
 			delete[] w_font;
 		}
 	}
+
+	//& Load OpenGL bullshit
+	Font::shader = new Shader("../shader/text.vs", "../shader/text.fs");
+
+	glCreateVertexArrays(1, &Font::VAO);
+
+	glCreateBuffers(1, &Font::VBO);
+	glNamedBufferStorage(Font::VBO, sizeof(vertices), vertices, 0);
+
+	glCreateBuffers(1, &Font::EBO);
+	glNamedBufferStorage(Font::EBO, sizeof(indices), indices, 0);
+
+	glVertexArrayElementBuffer(Font::VAO, Font::EBO);
+
+	GLuint vbufIndex = 0;
+	glVertexArrayVertexBuffer(Font::VAO, vbufIndex, Font::VBO, 0, sizeof(Vertex));
+
+	//! layout(location = 0) in vec2 aPos;
+	GLuint aPos_location = 0;
+	glVertexArrayAttribFormat(Font::VAO, aPos_location, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+	glVertexArrayAttribBinding(Font::VAO, aPos_location, vbufIndex);
+	glEnableVertexArrayAttrib(Font::VAO, aPos_location);
+
+	//! layout(location = 1) in vec2 aTexCoord;
+	GLuint aTexCoord_location = 1;
+	glVertexArrayAttribFormat(Font::VAO, aTexCoord_location, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, uv));
+	glVertexArrayAttribBinding(Font::VAO, aTexCoord_location, vbufIndex);
+	glEnableVertexArrayAttrib(Font::VAO, aTexCoord_location);
 }
 
 void Font::finalize()
 {
+	//& OpenGL
+	glDeleteBuffers(1, &Font::EBO);
+	glDeleteBuffers(1, &Font::VBO);
+	glDeleteVertexArrays(1, &Font::VAO);
+	delete Font::shader;
+
+	//& GDI
 	delete Font::collection;
 	Gdiplus::GdiplusShutdown(gdiplusToken);
 	delete Font::gdiplusStartupInput;
@@ -860,16 +905,21 @@ Font::~Font()
 #pragma region TEXT
 
 Text::Text(const char *text, Font *font)
-: text(nullptr), font(nullptr), pixelData(nullptr)
+: text(nullptr), font(nullptr)
 {
 	setText(text);
 	this->font = font;
-	render();
+
+	glCreateBuffers(1, &SSBO);
+	glNamedBufferData(SSBO, sizeof(S_CommonText), nullptr, GL_STREAM_DRAW);
+
+	render(false);
 }
 
 Text::~Text()
 {
-	delete pixelData;
+	glDeleteBuffers(1, &SSBO);
+	glDeleteTextures(1, &id);
 	delete text;
 }
 
@@ -880,52 +930,98 @@ void Text::setText(const char *text)
 	strcpy(this->text, text);
 }
 
-void Text::render()
+void Text::render(bool freeOldTexture)
 {
-	// *Convert input strings to wide strings
-	wchar_t *w_text       = toWideString(text);
+	unsigned char *pixelData;
 
-	// *Calculate the size required for the text
-	Gdiplus::Bitmap tempBitmap(1, 1);
-	Gdiplus::Graphics tempGraphics(&tempBitmap);
-	Gdiplus::RectF bounds;
-	tempGraphics.MeasureString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &bounds);
-	int width  = (int)std::ceil(bounds.Width);
-	int height = (int)std::ceil(bounds.Height);
-
-	// *Create bitmap for rendering the text
-	Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
-	Gdiplus::Graphics graphics(&bitmap);
-	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 255));
-	graphics.Clear(Gdiplus::Color(255, 0, 0, 0));
-	graphics.SetTextRenderingHint(Gdiplus::TextRenderingHint::TextRenderingHintSingleBitPerPixelGridFit);
-	graphics.DrawString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &brush);
-
-	// *Retrieve raw pixel data
-	Gdiplus::BitmapData bitmapData;
-	Gdiplus::Rect rect(0, 0, width, height);
-	bitmap.LockBits(&rect, Gdiplus::ImageLockMode::ImageLockModeRead, PixelFormat32bppARGB, &bitmapData);
-
-	unsigned int *pixelsARGB = (unsigned int*)bitmapData.Scan0;
-	unsigned int totalPixels = width * height;
-
-	// *Allocate memory
-	pixelData = new unsigned char[totalPixels];
-
-	// *Convert ARGB to single channel
-	for (unsigned int i = 0; i < totalPixels; i++)
-		pixelData[i] = pixelsARGB[i];
-
-	// *Cleanup resources
-	bitmap.UnlockBits(&bitmapData);
-	delete[] w_text;
-
-	for (int i = 0; i < height; i++)
+	//& GDI+
 	{
-		for (int j = 0; j < width; j++)
+		// *Convert input strings to wide strings
+		wchar_t *w_text       = toWideString(text);
+
+		// *Calculate the size required for the text
+		Gdiplus::Bitmap tempBitmap(1, 1);
+		Gdiplus::Graphics tempGraphics(&tempBitmap);
+		Gdiplus::RectF bounds;
+		tempGraphics.MeasureString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &bounds);
+		width  = (int)std::ceil(bounds.Width);
+		height = (int)std::ceil(bounds.Height);
+
+		// *Create bitmap for rendering the text
+		Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
+		Gdiplus::Graphics graphics(&bitmap);
+		Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 255));
+		graphics.Clear(Gdiplus::Color(255, 0, 0, 0));
+		graphics.SetTextRenderingHint(Gdiplus::TextRenderingHint::TextRenderingHintSingleBitPerPixelGridFit);
+		graphics.DrawString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &brush);
+
+		// *Retrieve raw pixel data
+		Gdiplus::BitmapData bitmapData;
+		Gdiplus::Rect rect(0, 0, width, height);
+		bitmap.LockBits(&rect, Gdiplus::ImageLockMode::ImageLockModeRead, PixelFormat32bppARGB, &bitmapData);
+
+		unsigned int *pixelsARGB = (unsigned int*)bitmapData.Scan0;
+		unsigned int totalPixels = width * height;
+
+		// *Allocate memory
+		pixelData = new unsigned char[totalPixels];
+
+		// *Convert ARGB to single channel
+		for (unsigned int i = 0; i < totalPixels; i++)
+			pixelData[i] = pixelsARGB[i];
+
+		// *Cleanup resources
+		bitmap.UnlockBits(&bitmapData);
+		delete[] w_text;
+	}
+
+	//& OpenGL
+	{
+		if (freeOldTexture)
+			glDeleteTextures(1, &id);
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &id);
+		glTextureStorage2D(id, 1, GL_R8, width, height);
+		glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, pixelData);
+		glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+
+	dst = {0, 0, width, height};
+	color = {255, 0, 0, 255};
+
+	for (unsigned int i = 0; i < height; i++)
+	{
+		for (unsigned int j = 0; j < width; j++)
 			printf("%c", pixelData[i * width + j] ? 219 : 32);
 		printf("\n");
 	}
+
+	delete[] pixelData;
+}
+
+void Text::draw()
+{
+	Font::shader->use();
+	Graphics::setVAO(Font::VAO);
+	Graphics::setTexture(id);
+
+	model = scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f));
+
+	SSBO_Data =
+	{
+		{color.getVec4()},
+		{Graphics::currentCamera->getViewProjectionMatrix()},
+		{model},
+	};
+
+	
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(S_CommonText), &SSBO_Data);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 #pragma endregion TEXT
