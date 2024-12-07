@@ -1,6 +1,8 @@
 #pragma once
 
 // WINAPI
+#include <objidl.h>
+#include <gdiplus.h>
 #include <windef.h>
 #include <winuser.h>
 #include <windef.h>
@@ -278,6 +280,13 @@ namespace sglf
 		Font(const Font&) = delete;
 		~Font();
 
+		static void initialize(const char *fonts[]);
+		static void finalize();
+
+		static Gdiplus::GdiplusStartupInput *gdiplusStartupInput;
+		static ULONG_PTR gdiplusToken;
+		static Gdiplus::PrivateFontCollection *collection;
+
 		HFONT font;
 		char *fileName;
 	};
@@ -340,7 +349,7 @@ namespace sglf
 		static void setViewport(unsigned int width, unsigned int height);
 	};
 
-	void initialize(int width, int height, const char *title, HINSTANCE hInstance);
+	void initialize(int width, int height, const char *title, HINSTANCE hInstance, const char *fonts[] = nullptr);
 	void finalize();
 	void endFrame();
 }

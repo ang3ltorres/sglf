@@ -13,9 +13,6 @@
 // GLM
 #include <glm/gtc/type_ptr.hpp>
 
-// FREETYPE
-#include <freetype/freetype.h>
-
 using namespace glm;
 using namespace sglf;
 
@@ -528,7 +525,7 @@ GLuint Texture::VAO;
 GLuint Texture::VBO;
 GLuint Texture::EBO;
 
-static LPCWSTR toWideString(const char *string)
+static wchar_t* toWideString(const char *string)
 {
 	if (!string)
 		return nullptr;
@@ -595,11 +592,11 @@ void Texture::getPixelData(const char *fileName, unsigned char *&buffer, unsigne
 {
 	IWICBitmapDecoder *wicDecoder;
 	wicFactory->CreateDecoder(GUID_ContainerFormatPng, nullptr, &wicDecoder);
-	LPCWSTR w_fileName = toWideString(fileName);
+	wchar_t *w_fileName = toWideString(fileName);
 
 	IWICStream *wicStream = nullptr;
 	Texture::wicFactory->CreateStream(&wicStream);
-	wicStream->InitializeFromFilename(w_fileName, GENERIC_READ);
+	wicStream->InitializeFromFilename((const wchar_t*)w_fileName, GENERIC_READ);
 
 	wicDecoder->Initialize(
 		wicStream,
@@ -812,36 +809,91 @@ void RenderTexture::batch()
 
 #pragma region FONT
 
+Gdiplus::GdiplusStartupInput *Font::gdiplusStartupInput;
+ULONG_PTR Font::gdiplusToken;
+Gdiplus::PrivateFontCollection *Font::collection;
+
+static unsigned char* getTextTexture(const char *text, const char *fontFamily, float fontSize, bool custom)
+{
+	// *Convert input strings to wide strings
+	wchar_t *w_text       = toWideString(text);
+	wchar_t *w_fontFamily = toWideString(fontFamily);
+
+	// *Initialize font
+	Gdiplus::Font font(w_fontFamily, fontSize, Gdiplus::FontStyle::FontStyleRegular, Gdiplus::Unit::UnitPixel, custom ? Font::collection : nullptr);
+
+	// *Calculate the size required for the text
+	Gdiplus::Bitmap tempBitmap(1, 1);
+	Gdiplus::Graphics tempGraphics(&tempBitmap);
+	Gdiplus::RectF bounds;
+	tempGraphics.MeasureString(w_text, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &bounds);
+	int width  = (int)std::ceil(bounds.Width);
+	int height = (int)std::ceil(bounds.Height);
+
+	// *Create bitmap for rendering the text
+	Gdiplus::Bitmap bitmap(width, height, PixelFormat32bppARGB);
+	Gdiplus::Graphics graphics(&bitmap);
+	Gdiplus::SolidBrush brush(Gdiplus::Color(255, 0, 0, 255));
+	graphics.Clear(Gdiplus::Color(255, 0, 0, 0));
+	graphics.SetTextRenderingHint(Gdiplus::TextRenderingHint::TextRenderingHintSingleBitPerPixelGridFit);
+	graphics.DrawString(w_text, -1, &font, Gdiplus::PointF(0.0f, 0.0f), &brush);
+
+	// *Retrieve raw pixel data
+	Gdiplus::BitmapData bitmapData;
+	Gdiplus::Rect rect(0, 0, width, height);
+	bitmap.LockBits(&rect, Gdiplus::ImageLockMode::ImageLockModeRead, PixelFormat32bppARGB, &bitmapData);
+
+	unsigned int *pixelsARGB = (unsigned int*)bitmapData.Scan0;
+	unsigned int totalPixels = width * height;
+
+	// *Allocate memory
+	unsigned char *pixels = new unsigned char[totalPixels];
+
+	// *Convert ARGB to single channel
+	for (unsigned int i = 0; i < totalPixels; i++) {
+			pixels[i] = pixelsARGB[i];
+	}
+
+	// *Cleanup resources
+	bitmap.UnlockBits(&bitmapData);
+	delete[] w_fontFamily;
+	delete[] w_text;
+
+	// Return raw pixel data (caller must free this memory)
+	return pixels;
+}
+
+void Font::initialize(const char *fonts[])
+{
+	Font::gdiplusStartupInput = new Gdiplus::GdiplusStartupInput{};
+	Gdiplus::GdiplusStartup(&gdiplusToken, gdiplusStartupInput, nullptr);
+	Font::collection = nullptr;
+	
+	if (fonts)
+	{
+		Font::collection = new Gdiplus::PrivateFontCollection{};
+		for (unsigned int i = 0; *fonts[i]; i++)
+		{
+			wchar_t *w_font = toWideString(fonts[i]);
+			Font::collection->AddFontFile(w_font);
+			delete[] w_font;
+		}
+	}
+}
+
+void Font::finalize()
+{
+	delete Font::collection;
+	Gdiplus::GdiplusShutdown(gdiplusToken);
+	delete Font::gdiplusStartupInput;
+}
+
 Font::Font(const char *fileName, const char *name)
 {
-	this->fileName = new char[strlen(fileName) + 1];
-	strcpy(this->fileName, fileName);
-
-	AddFontResourceEx(fileName, FR_PRIVATE, nullptr);
-	font = CreateFontA
-	(
-		48,
-		0,
-		0,
-		0,
-		FW_DONTCARE,
-		FALSE,
-		FALSE,
-		FALSE,
-		ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS,
-		NONANTIALIASED_QUALITY,
-		DEFAULT_PITCH | FF_DONTCARE,
-		name
-	);
 }
 
 Font::~Font()
 {
-	DeleteObject(font);
-	RemoveFontResourceEx(fileName, FR_PRIVATE, NULL);
-	delete[] fileName;
 }
 
 #pragma endregion FONT
@@ -874,34 +926,7 @@ void Text::setFont(Font *font)
 
 void Text::render()
 {
-	HDC dc = CreateCompatibleDC(Graphics::dc);
-	HBITMAP bitmap = CreateCompatibleBitmap(dc, 100, 50);
-	SelectObject(dc, bitmap);
 
-	SelectObject(dc, font);
-	SetTextColor(dc, RGB(255, 0, 255));
-	SetBkColor(dc, RGB(0, 0, 0));
-	SetBkMode(dc, OPAQUE);
-
-	RECT rect = { 0, 0, 100, 50 };
-	DrawTextA(dc, text, -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-	BITMAPINFO bmi = {};
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biWidth = 100;
-	bmi.bmiHeader.biHeight = -50; // Negative height for top-down bitmap
-	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = 32;   // 32-bit to include alpha
-	bmi.bmiHeader.biCompression = BI_RGB;
-
-	unsigned char* buffer = new unsigned char[100 * 50 * 4];
-	auto r = GetDIBits(Graphics::dc, bitmap, 0, 50, buffer, &bmi, DIB_RGB_COLORS);
-
-
-	for (int i = 0; i < 100 * 50 * 4; i += 4)
-		printf("%u\t", buffer[i]);
-
-	// printf("\n\n");
 }
 
 
@@ -1183,17 +1208,19 @@ void Graphics::updateTime()
 
 #pragma endregion GRAPHICS
 
-void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance)
+void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance, const char *fonts[])
 {
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 	sglf::Window::initialize(width, height, title, hInstance);
 	sglf::Graphics::initialize();
 	sglf::Texture::initialize();
 	sglf::Sound::initialize();
+	sglf::Font::initialize(fonts);
 }
 
 void sglf::finalize()
 {
+	sglf::Font::finalize();
 	sglf::Sound::finalize();
 	sglf::Texture::finalize();
 	sglf::Graphics::finalize();
