@@ -252,7 +252,6 @@ namespace sglf
 		void updateModel();
 		void setSrcRect(glm::ivec4 src);
 		void setDstRect(glm::ivec4 dst);
-
 		void setPosition(glm::ivec2 position);
 		void setSize(glm::ivec2 size);
 		void setRotation(float rotation);
@@ -316,12 +315,18 @@ namespace sglf
 	class Text
 	{
 	public:
-		Text(const char *text, Font *font);
+		Text(const char *text, Font *font, glm::vec2 pos, Color color = {0, 0, 0, 255});
 		Text(const Text&) = delete;
 		~Text();
 
 		void setText(const char *text);
-		void render(bool freeOldTexture = true);
+		void render();
+		void updateModel();
+		void setDstRect(glm::ivec4 dst);
+		void setPosition(glm::ivec2 position);
+		void setSize(glm::ivec2 size);
+		void setRotation(float rotation);
+		
 		void draw();
 
 		GLuint id;

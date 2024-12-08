@@ -30,8 +30,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	sglf::Texture       *textureAtlas  = new sglf::Texture{"D:/sglf_res/png_test.png"};
 	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
-	sglf::Font          *font          = new sglf::Font{"Minecraft", 128, sglf::Font::Style::Regular, true};
-	sglf::Text          *text          = new sglf::Text{"ABCD", font};
+	sglf::Font          *font          = new sglf::Font{"Minecraft", 16, sglf::Font::Style::Regular, true};
+	sglf::Text          *text          = new sglf::Text{"12IUIS", font, {0, 0}, {255, 0, 0, 255}};
+
+	text->dst.z *= 16;
+	text->dst.w *= 16;
+	text->updateModel();
 
 	while (!sglf::Window::shouldClose())
 	{

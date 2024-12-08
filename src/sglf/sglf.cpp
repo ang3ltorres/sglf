@@ -905,16 +905,17 @@ Font::~Font()
 
 #pragma region TEXT
 
-Text::Text(const char *text, Font *font)
-: text(nullptr), font(nullptr)
+Text::Text(const char *text, Font *font, glm::vec2 pos, Color color)
+: id(0), text(nullptr), font(font)
 {
 	setText(text);
-	this->font = font;
 
 	glCreateBuffers(1, &SSBO);
 	glNamedBufferData(SSBO, sizeof(S_CommonText), nullptr, GL_STREAM_DRAW);
 
-	render(false);
+	this->color = color;
+	dst = {pos.x, pos.y, 0, 0};
+	render();
 }
 
 Text::~Text()
@@ -929,16 +930,12 @@ void Text::setText(const char *text)
 	delete this->text;
 	this->text = new char[strlen(text) + 1];
 	strcpy(this->text, text);
+	render();
 }
 
-void Text::render(bool freeOldTexture)
+void Text::render()
 {
 	unsigned char *pixelData;
-
-	/*
-	todo
-	fix texture opengl dind tlike the non power of 2 tetxures :CCCCCC
-	*/
 
 	//& GDI+
 	{
@@ -983,9 +980,7 @@ void Text::render(bool freeOldTexture)
 
 	//& OpenGL
 	{
-		if (freeOldTexture)
-			glDeleteTextures(1, &id);
-
+		glDeleteTextures(1, &id);
 		glCreateTextures(GL_TEXTURE_2D, 1, &id);
 		glTextureStorage2D(id, 1, GL_R8, width, height);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Fix non multiple of 4 texture size
@@ -996,7 +991,43 @@ void Text::render(bool freeOldTexture)
 		glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
+	//& Update SSBO Data
+	dst.z = width;
+	dst.w = height;
+	updateModel();
+
 	delete[] pixelData;
+}
+
+void Text::updateModel()
+{
+	model = {translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))};
+}
+
+void Text::setDstRect(ivec4 dst)
+{
+	this->dst = dst;
+	updateModel();
+}
+
+void Text::setPosition(ivec2 position)
+{
+	dst.x = position.x;
+	dst.y = position.y;
+	updateModel();
+}
+
+void Text::setSize(ivec2 size)
+{
+	dst.z = size.x;
+	dst.w = size.y;
+	updateModel();
+}
+
+void Text::setRotation(float rotation)
+{
+	this->rotation = rotation;
+	updateModel();
 }
 
 void Text::draw()
@@ -1004,10 +1035,6 @@ void Text::draw()
 	Font::shader->use();
 	Graphics::setVAO(Font::VAO);
 	Graphics::setTexture(id);
-
-	dst = {0, 0, width, height};
-	color = {0, 0, 0, 255};
-	model = scale(mat4(1.0f), vec3(width, height, 1.0f));
 
 	SSBO_Data =
 	{
