@@ -880,7 +880,7 @@ void Font::finalize()
 
 	//& GDI
 	delete Font::collection;
-	Gdiplus::GdiplusShutdown(gdiplusToken);
+	Gdiplus::GdiplusShutdown(Font::gdiplusToken);
 	delete Font::gdiplusStartupInput;
 }
 
@@ -906,15 +906,17 @@ Font::~Font()
 #pragma region TEXT
 
 Text::Text(const char *text, Font *font, glm::vec2 pos, Color color)
-: id(0), text(nullptr), font(font)
+: id(0), font(font)
 {
-	setText(text);
+	this->text = new char[strlen(text) + 1];
+	strcpy(this->text, text);
 
 	glCreateBuffers(1, &SSBO);
 	glNamedBufferData(SSBO, sizeof(S_CommonText), nullptr, GL_STREAM_DRAW);
 
+	dst         = {pos.x, pos.y, 0, 0};
 	this->color = color;
-	dst = {pos.x, pos.y, 0, 0};
+	rotation    = 0.0f;
 	render();
 }
 
@@ -947,6 +949,8 @@ void Text::render()
 		Gdiplus::Graphics tempGraphics(&tempBitmap);
 		Gdiplus::RectF bounds;
 		tempGraphics.MeasureString(w_text, -1, font->gdiFont, Gdiplus::PointF(0.0f, 0.0f), &bounds);
+
+		// *Get needed size
 		width  = (int)std::ceil(bounds.Width);
 		height = (int)std::ceil(bounds.Height);
 
@@ -971,7 +975,7 @@ void Text::render()
 
 		// *Convert ARGB to single channel
 		for (unsigned int i = 0; i < totalPixels; i++)
-			pixelData[i] = (pixelsARGB[i] >> 16) & 0xFF;;
+			pixelData[i] = pixelsARGB[i];
 
 		// *Cleanup resources
 		bitmap.UnlockBits(&bitmapData);
