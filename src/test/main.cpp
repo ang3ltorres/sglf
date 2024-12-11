@@ -60,7 +60,8 @@ int main()
 		renderTexture->batch();
 		renderTexture->texture->draw();
 
-		text->draw();
+		text->batch();
+		text->texture->draw();
 
 		sglf::endFrame();
 	}

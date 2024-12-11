@@ -81,13 +81,6 @@ namespace sglf
 		glm::mat4 u_Model;
 	};
 
-	struct alignas(16) S_CommonText
-	{
-		glm::vec4 u_TintColor;
-		glm::mat4 u_ViewProjection;
-		glm::mat4 u_Model;
-	};
-
 	struct Color
 	{
 		unsigned char r;
@@ -198,6 +191,35 @@ namespace sglf
 		void updateProjection();
 	};
 
+	class Font
+	{
+	public:
+
+		enum Style
+		{
+			Regular = Gdiplus::FontStyle::FontStyleRegular,
+			Bold    = Gdiplus::FontStyle::FontStyleBold,
+			Italic  = Gdiplus::FontStyle::FontStyleItalic,
+		};
+
+		Font(const char *familyName, float size = 16, Style style = Style::Regular, bool custom = false);
+		Font(const Font&) = delete;
+		~Font();
+
+		static void initialize(const char *fonts[]);
+		static void finalize();
+
+		static Gdiplus::GdiplusStartupInput *gdiplusStartupInput;
+		static ULONG_PTR gdiplusToken;
+		static Gdiplus::PrivateFontCollection *collection;
+
+		char *familyName;
+		float size;
+		Style style;
+		bool custom;
+		Gdiplus::Font *gdiFont;
+	};
+
 	class Texture
 	{
 	public:
@@ -210,6 +232,7 @@ namespace sglf
 		static void finalize();
 
 		static void getPixelData(const char *fileName, unsigned char *&buffer, unsigned int &width, unsigned int &height);
+		static void getPixelData(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height);
 
 		static IWICImagingFactory *wicFactory;
 		
@@ -221,11 +244,12 @@ namespace sglf
 
 		Texture(const char *fileName, unsigned int maxInstances = 16);
 		Texture(unsigned int width, unsigned int height, unsigned int maxInstances = 1);
+		Texture(const char *text, Font *font, unsigned int maxInstances = 1);
 		~Texture();
 
 		// Batch
 		GLuint UBO;
-		int flipY;
+		int type;
 
 		GLuint SSBO;
 		S_CommonTexture *SSBO_Data;
@@ -250,6 +274,7 @@ namespace sglf
 		float rotation;
 
 		void updateModel();
+		void batch();
 
 		glm::mat4 model;
 	};
@@ -260,8 +285,6 @@ namespace sglf
 		Sprite(const Sprite&) = default;
 		Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst);
 		~Sprite() = default;
-
-		void batch();
 	};
 
 	class RenderTexture : public Drawable
@@ -272,47 +295,11 @@ namespace sglf
 
 		GLuint FBO;
 
-		void batch();
-
 		bool internalCamera;
 		Camera *camera;
 	};
 
-	class Font
-	{
-	public:
-
-		enum Style
-		{
-			Regular = Gdiplus::FontStyle::FontStyleRegular,
-			Bold    = Gdiplus::FontStyle::FontStyleBold,
-			Italic  = Gdiplus::FontStyle::FontStyleItalic,
-		};
-
-		Font(const char *familyName, float size = 16, Style style = Style::Regular, bool custom = false);
-		Font(const Font&) = delete;
-		~Font();
-
-		static void initialize(const char *fonts[]);
-		static void finalize();
-
-		static Gdiplus::GdiplusStartupInput *gdiplusStartupInput;
-		static ULONG_PTR gdiplusToken;
-		static Gdiplus::PrivateFontCollection *collection;
-
-		static Shader *shader;
-		static GLuint VAO;
-		static GLuint VBO;
-		static GLuint EBO;
-
-		char *familyName;
-		float size;
-		Style style;
-		bool custom;
-		Gdiplus::Font *gdiFont;
-	};
-
-	class Text
+	class Text : public Drawable
 	{
 	public:
 		Text(const char *text, Font *font, glm::vec2 pos, Color color = {0, 0, 0, 255});
@@ -321,28 +308,9 @@ namespace sglf
 
 		void setText(const char *text);
 		void render();
-		void updateModel();
-		void setDstRect(glm::ivec4 dst);
-		void setPosition(glm::ivec2 position);
-		void setSize(glm::ivec2 size);
-		void setRotation(float rotation);
-		
-		void draw();
-
-		GLuint id;
-		GLuint width;
-		GLuint height;
-
-		GLuint SSBO;
-		S_CommonText SSBO_Data;
 
 		char *text;
 		Font *font;
-
-		glm::ivec4 dst;
-		Color color;
-		float rotation;
-		glm::mat4 model;
 	};
 
 	class Graphics
