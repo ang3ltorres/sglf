@@ -235,42 +235,42 @@ namespace sglf
 		void draw();
 	};
 
-	class Sprite
+	class Drawable
+	{
+	public:
+		Drawable(const Drawable&) = delete;
+		Drawable(Texture *texture);
+		~Drawable() = default;
+
+		Texture *texture;
+		
+		glm::ivec4 src;
+		glm::ivec4 dst;
+		Color color;
+		float rotation;
+
+		void updateModel();
+
+		glm::mat4 model;
+	};
+
+	class Sprite : public Drawable
 	{
 	public:
 		Sprite(const Sprite&) = default;
 		Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst);
 		~Sprite() = default;
 
-		Texture *texture;
-		glm::ivec4 src;
-		glm::ivec4 dst;
-		Color color;
-		float rotation;
-		glm::mat4 model;
-
-		void updateModel();
-		void setSrcRect(glm::ivec4 src);
-		void setDstRect(glm::ivec4 dst);
-		void setPosition(glm::ivec2 position);
-		void setSize(glm::ivec2 size);
-		void setRotation(float rotation);
-
 		void batch();
 	};
 
-	class RenderTexture
+	class RenderTexture : public Drawable
 	{
 	public:
 		RenderTexture(unsigned int width, unsigned int height, Camera *camera = nullptr);
 		~RenderTexture();
 
 		GLuint FBO;
-		Texture *texture;
-		glm::ivec4 src;
-		glm::ivec4 dst;
-		Color color;
-		float rotation;
 
 		void batch();
 

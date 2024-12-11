@@ -714,49 +714,28 @@ void Texture::draw()
 
 #pragma endregion TEXTURE
 
-#pragma region SPRITE
+#pragma region DRAWABLE
 
-Sprite::Sprite(Texture *texture, ivec4 src, ivec4 dst)
-: texture(texture), src(src), dst(dst), color({255, 255, 255, 255}), rotation(0.0f)
+Drawable::Drawable(Texture *texture)
+: texture(texture), src({0, 0, texture->width, texture->height}), dst({0, 0, texture->width, texture->height}), color({255, 255, 255, 255}), rotation(0.0f)
 {
 	updateModel();
 }
 
-void Sprite::updateModel()
+void Drawable::updateModel()
 {
 	model = {translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))};
 }
 
-void Sprite::setSrcRect(ivec4 src)
+#pragma endregion DRAWABLE
+
+#pragma region SPRITE
+
+Sprite::Sprite(Texture *texture, ivec4 src, ivec4 dst)
+: Drawable::Drawable(texture)
 {
 	this->src = src;
-	updateModel();
-}
-
-void Sprite::setDstRect(ivec4 dst)
-{
 	this->dst = dst;
-	updateModel();
-}
-
-void Sprite::setPosition(ivec2 position)
-{
-	dst.x = position.x;
-	dst.y = position.y;
-	updateModel();
-}
-
-void Sprite::setSize(ivec2 size)
-{
-	dst.z = size.x;
-	dst.w = size.y;
-	updateModel();
-}
-
-void Sprite::setRotation(float rotation)
-{
-	this->rotation = rotation;
-	updateModel();
 }
 
 void Sprite::batch()
@@ -775,17 +754,11 @@ void Sprite::batch()
 #pragma region RENDER_TEXTURE
 
 RenderTexture::RenderTexture(unsigned int width, unsigned int height, Camera *camera)
+: Drawable::Drawable(new Texture(width, height))
 {
-	rotation = 0.0f;
-	color = {255, 255, 255, 255};
-	texture = new Texture(width, height);
-
 	// Camera
 	internalCamera = camera ? false : true;
 	this->camera = camera ? camera : new Camera(width, height);
-
-	this->src = {0, 0, width, height};
-	this->dst = {0, 0, width, height};
 
 	glCreateFramebuffers(1, &FBO);
 	glNamedFramebufferTexture(FBO, GL_COLOR_ATTACHMENT0, texture->id, 0);
@@ -802,11 +775,12 @@ RenderTexture::~RenderTexture()
 
 void RenderTexture::batch()
 {
-	texture->SSBO_Data[texture->currentInstance++] = {
+	texture->SSBO_Data[texture->currentInstance++] =
+	{
 		{(float)src.x / (float)texture->width, (float)src.y / (float)texture->height, (float)src.z / (float)texture->width, (float)src.w / (float)texture->height},
 		{color.getVec4()},
 		{Graphics::currentCamera->getViewProjectionMatrix()},
-		{translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))},
+		{model},
 	};
 }
 

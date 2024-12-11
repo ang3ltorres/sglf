@@ -33,6 +33,10 @@ int main()
 	// text->dst.w *= 16;
 	// text->updateModel();
 
+	renderTexture->dst.z *= 2;
+	renderTexture->dst.w *= 2;
+	renderTexture->updateModel();
+
 	while (!sglf::Window::shouldClose())
 	{
 		// Update logic
