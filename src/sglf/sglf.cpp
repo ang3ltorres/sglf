@@ -182,7 +182,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-void Window::initialize(int width, int height, const char *title, HINSTANCE hInstance)
+void Window::initialize(int width, int height, const char *title)
 {
 	Window::forceClose = false;
 	Window::resizedCallback = nullptr;
@@ -192,7 +192,7 @@ void Window::initialize(int width, int height, const char *title, HINSTANCE hIns
 	ZeroMemory(&windowClass, sizeof(WNDCLASSEXA));
 	windowClass.cbSize        = sizeof(WNDCLASSEXA);
 	windowClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
-	windowClass.hInstance     = hInstance;
+	windowClass.hInstance     = nullptr;
 	windowClass.lpfnWndProc   = WindowProc;
 	windowClass.lpszClassName = "MainWindow";
 	windowClass.hIcon         = LoadIcon(nullptr, IDI_APPLICATION);
@@ -213,7 +213,7 @@ void Window::initialize(int width, int height, const char *title, HINSTANCE hIns
 	Window::hwnd = CreateWindowExA(
 		WS_EX_OVERLAPPEDWINDOW, windowClass.lpszClassName, title, WS_OVERLAPPEDWINDOW,
 		posX, posY, rect.right - rect.left, rect.bottom - rect.top,
-		nullptr, nullptr, hInstance, nullptr
+		nullptr, nullptr, nullptr, nullptr
 	);
 	
 	ShowWindow(Window::hwnd, SW_NORMAL);
@@ -1330,10 +1330,10 @@ void Graphics::updateTime()
 
 #pragma endregion GRAPHICS
 
-void sglf::initialize(int width, int height, const char *title, HINSTANCE hInstance, const char *fonts[])
+void sglf::initialize(int width, int height, const char *title, const char *fonts[])
 {
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	sglf::Window::initialize(width, height, title, hInstance);
+	sglf::Window::initialize(width, height, title);
 	sglf::Graphics::initialize();
 	sglf::Texture::initialize();
 	sglf::Sound::initialize();
