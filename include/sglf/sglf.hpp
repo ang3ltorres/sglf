@@ -291,6 +291,7 @@ namespace sglf
 	{
 	public:
 		RenderTexture(unsigned int width, unsigned int height, Camera *camera = nullptr);
+		RenderTexture(const RenderTexture&) = delete;
 		~RenderTexture();
 
 		GLuint FBO;

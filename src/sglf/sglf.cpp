@@ -71,24 +71,28 @@ PFNGLACTIVETEXTUREPROC glActiveTexture;
 
 #pragma region MISC
 
+// *Generic Vertex data for drawing 2d stuff
 struct Vertex
 {
 	float position[2];
 	float uv[2];
 };
 
-static const Vertex vertices[] = {
+static const Vertex vertices[] =
+{
 	{ { 0.0f, 0.0f }, { 0.0f, 0.0f } },
 	{ { 1.0f, 0.0f }, { 1.0f, 0.0f } },
 	{ { 0.0f, 1.0f }, { 0.0f, 1.0f } },
 	{ { 1.0f, 1.0f }, { 1.0f, 1.0f } }
 };
 
-static const unsigned int indices[] = {
+static const unsigned int indices[] =
+{
 	0, 1, 2,
 	1, 2, 3,
 };
 
+// *Deal with Windows UTF-16
 static wchar_t* toWideString(const char *string)
 {
 	if (!string)
@@ -103,16 +107,12 @@ static wchar_t* toWideString(const char *string)
 	return wideString;
 }
 
-#pragma endregion MISC
-
-#pragma region COLOR
-
 vec4 Color::getVec4() const
 {
 	return vec4({r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f});
 }
 
-#pragma endregion COLOR
+#pragma endregion MISC
 
 #pragma region WINDOW
 
@@ -289,14 +289,14 @@ void Input::keyUp(WPARAM wParam)
 
 void Input::reset()
 {
-	Input::up[1] = false;
-	Input::down[1] = false;
-	Input::left[1] = false;
+	Input::up[1]    = false;
+	Input::down[1]  = false;
+	Input::left[1]  = false;
 	Input::right[1] = false;
 
-	Input::up[2] = false;
-	Input::down[2] = false;
-	Input::left[2] = false;
+	Input::up[2]    = false;
+	Input::down[2]  = false;
+	Input::left[2]  = false;
 	Input::right[2] = false;
 }
 
@@ -696,7 +696,7 @@ void Texture::getPixelData(const char *fileName, unsigned char *&buffer, unsigne
 void Texture::getPixelData(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height)
 {
 	// *Convert input strings to wide strings
-	wchar_t *w_text       = toWideString(text);
+	wchar_t *w_text = toWideString(text);
 
 	// *Calculate the size required for the text
 	Gdiplus::Bitmap tempBitmap(1, 1);
@@ -762,6 +762,7 @@ Texture::Texture(const char *fileName, unsigned int maxInstances)
 Texture::Texture(unsigned int width, unsigned int height, unsigned int maxInstances)
 : width(width), height(height), maxInstances(maxInstances), currentInstance(0)
 {
+	// *Create empty texture
 	unsigned char color[4] = { 0, 0, 0, 255 };
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
 	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
@@ -1137,7 +1138,6 @@ void Graphics::initialize()
 	Graphics::currentTexture = 0;
 	Graphics::defaultCamera = new Camera(Window::width, Window::height);
 	Graphics::currentCamera = Graphics::defaultCamera;
-	Graphics::setRenderTexture();
 
 	QueryPerformanceFrequency(&Graphics::frequency);
 	QueryPerformanceCounter(&Graphics::lastFrameTime);
