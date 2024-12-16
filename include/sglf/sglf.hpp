@@ -231,8 +231,9 @@ namespace sglf
 		static void initialize();
 		static void finalize();
 
-		static void getPixelData(const char *fileName, unsigned char *&buffer, unsigned int &width, unsigned int &height);
-		static void getPixelData(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height);
+		static void getPixelDataPNG(const char *fileName, unsigned char *&buffer, unsigned int *width, unsigned int *height);
+		static void getPixelDataSVG(const char *fileName, unsigned char *&buffer, unsigned int widthDesired, unsigned int heightDesired);
+		static void getPixelDataFont(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height);
 
 		static IWICImagingFactory *wicFactory;
 		
@@ -243,6 +244,7 @@ namespace sglf
 		static GLuint EBO;
 
 		Texture(const char *fileName, unsigned int maxInstances = 16);
+		Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances = 16);
 		Texture(unsigned int width, unsigned int height, unsigned int maxInstances = 1);
 		Texture(const char *text, Font *font, unsigned int maxInstances = 1);
 		~Texture();

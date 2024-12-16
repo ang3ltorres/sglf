@@ -13,6 +13,9 @@
 // GLM
 #include <glm/gtc/type_ptr.hpp>
 
+// PLUTOSVG
+#include <plutosvg.h>
+
 using namespace glm;
 using namespace sglf;
 
@@ -644,7 +647,7 @@ void Texture::finalize()
 	delete Texture::shader;
 }
 
-void Texture::getPixelData(const char *fileName, unsigned char *&buffer, unsigned int &width, unsigned int &height)
+void Texture::getPixelDataPNG(const char *fileName, unsigned char *&buffer, unsigned int *width, unsigned int *height)
 {
 	IWICBitmapDecoder *wicDecoder;
 	wicFactory->CreateDecoder(GUID_ContainerFormatPng, nullptr, &wicDecoder);
@@ -675,14 +678,14 @@ void Texture::getPixelData(const char *fileName, unsigned char *&buffer, unsigne
 		WICBitmapPaletteTypeCustom
 	);
 
-	wicConverter->GetSize(&width, &height);
+	wicConverter->GetSize(width, height);
 
-	unsigned int bufferSize = width * height * 4;
+	unsigned int bufferSize = *width * *height * 4;
 	buffer = new unsigned char[bufferSize];
 
 	wicConverter->CopyPixels(
 		nullptr,
-		width * 4,
+		*width * 4,
 		bufferSize,
 		buffer
 	);
@@ -693,7 +696,32 @@ void Texture::getPixelData(const char *fileName, unsigned char *&buffer, unsigne
 	wicDecoder->Release();
 }
 
-void Texture::getPixelData(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height)
+void Texture::getPixelDataSVG(const char *fileName, unsigned char *&buffer, unsigned int widthDesired, unsigned int heightDesired)
+{
+	// Get data in ARGB format
+	plutosvg_document_t *document = plutosvg_document_load_from_file(fileName, -1, -1);
+	plutovg_surface_t *surface = plutosvg_document_render_to_surface(document, nullptr, widthDesired, heightDesired, nullptr, nullptr, nullptr);
+
+	unsigned int bufferSize = widthDesired * heightDesired * 4;
+	unsigned char *data = plutovg_surface_get_data(surface);
+	buffer = new unsigned char[bufferSize];
+	std::memcpy(buffer, data, bufferSize);
+
+	// Transform to RGBA format
+	unsigned char temp;
+	for (unsigned int i = 0; i < bufferSize; i += 4)
+	{
+		// Swap bytes directly
+		temp = buffer[i];
+		buffer[i] = buffer[i + 2];
+		buffer[i + 2] = temp;
+	}
+	
+	plutovg_surface_destroy(surface);
+	plutosvg_document_destroy(document);
+}
+
+void Texture::getPixelDataFont(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height)
 {
 	// *Convert input strings to wide strings
 	wchar_t *w_text = toWideString(text);
@@ -739,7 +767,30 @@ void Texture::getPixelData(const char *text, Font *font, unsigned char *&buffer,
 Texture::Texture(const char *fileName, unsigned int maxInstances)
 : maxInstances(maxInstances), currentInstance(0)
 {
-	Texture::getPixelData(fileName, pixelData, width, height);
+	Texture::getPixelDataPNG(fileName, pixelData, &width, &height);
+
+	glCreateTextures(GL_TEXTURE_2D, 1, &id);
+	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	type = 0;
+	glCreateBuffers(1, &UBO);
+	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
+
+	glCreateBuffers(1, &SSBO);
+	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
+	SSBO_Data = new S_CommonTexture[maxInstances];
+}
+
+Texture::Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances)
+: width(width), height(height), maxInstances(maxInstances), currentInstance(0)
+{
+	Texture::getPixelDataSVG(fileName, pixelData, width, height);
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
 	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
@@ -786,7 +837,7 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int maxInstan
 Texture::Texture(const char *text, Font *font, unsigned int maxInstances)
 : maxInstances(maxInstances), currentInstance(0)
 {
-	Texture::getPixelData(text, font, pixelData, width, height);
+	Texture::getPixelDataFont(text, font, pixelData, width, height);
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
 	glTextureStorage2D(id, 1, GL_R8, width, height);

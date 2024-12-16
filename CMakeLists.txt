@@ -13,7 +13,7 @@ add_library(sglf ${SOURCES_SGLF})
 target_include_directories(sglf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/sglf")
 target_compile_options(sglf PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=1)
 target_compile_definitions(sglf PRIVATE WIN32_LEAN_AND_MEAN)
-target_link_libraries(sglf PUBLIC Vorbis::vorbisfile Vorbis::vorbis Ogg::ogg glm::glm-header-only gdiplus dsound windowscodecs opengl32 user32 gdi32 user32 ole32)
+target_link_libraries(sglf PUBLIC plutosvg plutovg Vorbis::vorbisfile Vorbis::vorbis Ogg::ogg glm::glm-header-only gdiplus dsound windowscodecs opengl32 user32 gdi32 user32 ole32)
 
 file(GLOB_RECURSE SOURCES_TEST CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/test/*.cpp")
 add_executable(test ${SOURCES_TEST})

@@ -10,6 +10,7 @@ Minimalist C++ library containing all you need to create simple 2D applications 
 - [GLM](https://github.com/g-truc/glm)
 - [LIBOGG](https://xiph.org/downloads/)
 - [LIBVORBIS](https://xiph.org/downloads/)
+- [PLUTOSVG](https://github.com/sammycage/plutosvg)
 
 ## Example Code
 ```cpp
@@ -21,12 +22,8 @@ static void resized(unsigned int width, unsigned int height)
   sglf::Graphics::defaultCamera->height = height;
 }
 
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int main()
 {
-  UNREFERENCED_PARAMETER(hPrevInstance);
-  UNREFERENCED_PARAMETER(lpCmdLine);
-  UNREFERENCED_PARAMETER(nCmdShow);
-
   unsigned int width = 800;
   unsigned int height = 600;
 
@@ -37,32 +34,38 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     " ",
   };
   
-  sglf::initialize(width, height, "OpenGL", hInstance, fonts);
+  sglf::initialize(width, height, "OpenGL", fonts);
   sglf::Window::resizedCallback = &resized;
   
   sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};
-  sglf::Texture       *textureAtlas  = new sglf::Texture{"D:/sglf_res/png_test.png"};
-  sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
+  sglf::Texture       *pngTexture    = new sglf::Texture{"D:/sglf_res/png_test.png"};
+  sglf::Sprite        *pngSprite     = new sglf::Sprite{pngTexture, {0, 0, 400, 300}, {0, 0, 400, 300}};
+  sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 256, 256};
+  sglf::Sprite        *svgSprite     = new sglf::Sprite{svgTexture, {0, 0, 256, 256}, {0, 0, 256, 256}};
   sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
-  sglf::Font          *font          = new sglf::Font{"Minecraft", 64, sglf::Font::Style::Regular, true};
-  sglf::Text          *text          = new sglf::Text{"Example Text", font, {0, 0}, {255, 0, 0, 255}};
+  sglf::Font          *font          = new sglf::Font{"Minecraft", 128/2, sglf::Font::Style::Regular, true};
+  sglf::Text          *text          = new sglf::Text{"Example text", font, {0, 0}, {255, 0, 0, 255}};
+
+  renderTexture->dst.z *= 2;
+  renderTexture->dst.w *= 2;
+  renderTexture->updateModel();
 
   while (!sglf::Window::shouldClose())
   {
     // Update logic
     if (sglf::Input::down[1]) sound->play();
 
-    if (sglf::Input::up[0])    { sprite->dst.y--; sprite->updateModel(); }
-    if (sglf::Input::down[0])  { sprite->dst.y++; sprite->updateModel(); }
-    if (sglf::Input::left[0])  { sprite->dst.x--; sprite->updateModel(); }
-    if (sglf::Input::right[0]) { sprite->dst.x++; sprite->updateModel(); }
+    if (sglf::Input::up[0])    { pngSprite->dst.y--; pngSprite->updateModel(); }
+    if (sglf::Input::down[0])  { pngSprite->dst.y++; pngSprite->updateModel(); }
+    if (sglf::Input::left[0])  { pngSprite->dst.x--; pngSprite->updateModel(); }
+    if (sglf::Input::right[0]) { pngSprite->dst.x++; pngSprite->updateModel(); }
 
     // Render to target
     sglf::Graphics::setRenderTexture(renderTexture);
     sglf::Graphics::clearScreen({255, 255, 255, 255});
 
-    sprite->batch();
-    sprite->texture->draw();
+    pngSprite->batch();
+    pngSprite->texture->draw();
 
     // Render to default "canvas"
     sglf::Graphics::setRenderTexture();
@@ -70,16 +73,21 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     renderTexture->batch();
     renderTexture->texture->draw();
 
-    text->draw();
+    svgSprite->batch();
+    svgSprite->texture->draw();
+
+    text->batch();
+    text->texture->draw();
 
     sglf::endFrame();
   }
 
+  delete svgTexture;
   delete text;
   delete font;
   delete sound;
-  delete sprite;
-  delete textureAtlas;
+  delete pngSprite;
+  delete pngTexture;
   delete renderTexture;
 
   sglf::finalize();

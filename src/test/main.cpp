@@ -1,5 +1,4 @@
 #include <sglf/sglf.hpp>
-#include <cstdio>
 
 static void resized(unsigned int width, unsigned int height)
 {
@@ -23,15 +22,13 @@ int main()
 	sglf::Window::resizedCallback = &resized;
 	
 	sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};
-	sglf::Texture       *textureAtlas  = new sglf::Texture{"D:/sglf_res/png_test.png"};
-	sglf::Sprite        *sprite        = new sglf::Sprite{textureAtlas, {0, 0, 400, 300}, {0, 0, 400, 300}};
+	sglf::Texture       *pngTexture    = new sglf::Texture{"D:/sglf_res/png_test.png"};
+	sglf::Sprite        *pngSprite     = new sglf::Sprite{pngTexture, {0, 0, 400, 300}, {0, 0, 400, 300}};
+	sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 256, 256};
+	sglf::Sprite        *svgSprite     = new sglf::Sprite{svgTexture, {0, 0, 256, 256}, {0, 0, 256, 256}};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
 	sglf::Font          *font          = new sglf::Font{"Minecraft", 128/2, sglf::Font::Style::Regular, true};
-	sglf::Text          *text          = new sglf::Text{"veri weitrd text 1231", font, {0, 0}, {255, 0, 0, 255}};
-
-	// text->dst.z *= 16;
-	// text->dst.w *= 16;
-	// text->updateModel();
+	sglf::Text          *text          = new sglf::Text{"Example text", font, {0, 0}, {255, 0, 0, 255}};
 
 	renderTexture->dst.z *= 2;
 	renderTexture->dst.w *= 2;
@@ -42,17 +39,17 @@ int main()
 		// Update logic
 		if (sglf::Input::down[1]) sound->play();
 
-		if (sglf::Input::up[0])    { sprite->dst.y--; sprite->updateModel(); }
-		if (sglf::Input::down[0])  { sprite->dst.y++; sprite->updateModel(); }
-		if (sglf::Input::left[0])  { sprite->dst.x--; sprite->updateModel(); }
-		if (sglf::Input::right[0]) { sprite->dst.x++; sprite->updateModel(); }
+		if (sglf::Input::up[0])    { pngSprite->dst.y--; pngSprite->updateModel(); }
+		if (sglf::Input::down[0])  { pngSprite->dst.y++; pngSprite->updateModel(); }
+		if (sglf::Input::left[0])  { pngSprite->dst.x--; pngSprite->updateModel(); }
+		if (sglf::Input::right[0]) { pngSprite->dst.x++; pngSprite->updateModel(); }
 
 		// Render to target
 		sglf::Graphics::setRenderTexture(renderTexture);
 		sglf::Graphics::clearScreen({255, 255, 255, 255});
 
-		sprite->batch();
-		sprite->texture->draw();
+		pngSprite->batch();
+		pngSprite->texture->draw();
 
 		// Render to default "canvas"
 		sglf::Graphics::setRenderTexture();
@@ -60,17 +57,21 @@ int main()
 		renderTexture->batch();
 		renderTexture->texture->draw();
 
+		svgSprite->batch();
+		svgSprite->texture->draw();
+
 		text->batch();
 		text->texture->draw();
 
 		sglf::endFrame();
 	}
 
+	delete svgTexture;
 	delete text;
 	delete font;
 	delete sound;
-	delete sprite;
-	delete textureAtlas;
+	delete pngSprite;
+	delete pngTexture;
 	delete renderTexture;
 
 	sglf::finalize();
