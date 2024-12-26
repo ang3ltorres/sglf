@@ -22,10 +22,11 @@ int main()
 	sglf::Window::resizedCallback = &resized;
 	
 	sglf::RenderTexture *renderTexture = new sglf::RenderTexture{256, 240};
-	sglf::Texture       *pngTexture    = new sglf::Texture{"D:/sglf_res/png_test.png"};
+	sglf::Texture       *pngTexture    = new sglf::Texture{"D:/sglf_res/png_test.png", 1};
 	sglf::Sprite        *pngSprite     = new sglf::Sprite{pngTexture, {0, 0, 400, 300}, {0, 0, 400, 300}};
-	sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 256, 256};
-	sglf::Sprite        *svgSprite     = new sglf::Sprite{svgTexture, {0, 0, 256, 256}, {0, 0, 256, 256}};
+	// sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 256, 256, 1};
+	sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 0.1f, 1};
+	sglf::Sprite        *svgSprite     = new sglf::Sprite{svgTexture};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
 	sglf::Font          *font          = new sglf::Font{"Minecraft", 128/2, sglf::Font::Style::Regular, true};
 	sglf::Text          *text          = new sglf::Text{"Example text", font, {0, 0}, {255, 0, 0, 255}};

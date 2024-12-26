@@ -680,7 +680,7 @@ void Texture::getPixelDataPNG(const char *fileName, unsigned char *&buffer, unsi
 
 	wicConverter->GetSize(width, height);
 
-	unsigned int bufferSize = *width * *height * 4;
+	unsigned int bufferSize = (*width) * (*height) * 4;
 	buffer = new unsigned char[bufferSize];
 
 	wicConverter->CopyPixels(
@@ -696,13 +696,46 @@ void Texture::getPixelDataPNG(const char *fileName, unsigned char *&buffer, unsi
 	wicDecoder->Release();
 }
 
-void Texture::getPixelDataSVG(const char *fileName, unsigned char *&buffer, unsigned int widthDesired, unsigned int heightDesired)
+void Texture::getPixelDataSVGFixed(const char *fileName, unsigned char *&buffer, unsigned int widthDesired, unsigned int heightDesired)
 {
-	// Get data in ARGB format
 	plutosvg_document_t *document = plutosvg_document_load_from_file(fileName, -1, -1);
+	
+	// Get data in ARGB format
 	plutovg_surface_t *surface = plutosvg_document_render_to_surface(document, nullptr, widthDesired, heightDesired, nullptr, nullptr, nullptr);
 
 	unsigned int bufferSize = widthDesired * heightDesired * 4;
+	unsigned char *data = plutovg_surface_get_data(surface);
+	buffer = new unsigned char[bufferSize];
+	std::memcpy(buffer, data, bufferSize);
+
+	// Transform to RGBA format
+	unsigned char temp;
+	for (unsigned int i = 0; i < bufferSize; i += 4)
+	{
+		// Swap bytes directly
+		temp = buffer[i];
+		buffer[i] = buffer[i + 2];
+		buffer[i + 2] = temp;
+	}
+	
+	plutovg_surface_destroy(surface);
+	plutosvg_document_destroy(document);
+}
+
+void Texture::getPixelDataSVGPercent(const char *fileName, unsigned char *&buffer, float percent, unsigned int *width, unsigned int *height)
+{
+	plutosvg_document_t *document = plutosvg_document_load_from_file(fileName, -1, -1);
+
+	static plutovg_rect_t extents;
+	plutosvg_document_extents(document, nullptr, &extents);
+
+	*width  = extents.w * percent;
+	*height = extents.h * percent;
+
+	// Get data in ARGB format
+	plutovg_surface_t *surface = plutosvg_document_render_to_surface(document, nullptr, *width, *height, nullptr, nullptr, nullptr);
+
+	unsigned int bufferSize = (*width) * (*height) * 4;
 	unsigned char *data = plutovg_surface_get_data(surface);
 	buffer = new unsigned char[bufferSize];
 	std::memcpy(buffer, data, bufferSize);
@@ -790,7 +823,29 @@ Texture::Texture(const char *fileName, unsigned int maxInstances)
 Texture::Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances)
 : width(width), height(height), maxInstances(maxInstances), currentInstance(0)
 {
-	Texture::getPixelDataSVG(fileName, pixelData, width, height);
+	Texture::getPixelDataSVGFixed(fileName, pixelData, width, height);
+
+	glCreateTextures(GL_TEXTURE_2D, 1, &id);
+	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	type = 0;
+	glCreateBuffers(1, &UBO);
+	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
+
+	glCreateBuffers(1, &SSBO);
+	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
+	SSBO_Data = new S_CommonTexture[maxInstances];
+}
+
+Texture::Texture(const char *fileName, float percent, unsigned int maxInstances)
+{
+	Texture::getPixelDataSVGPercent(fileName, pixelData, percent, &width, &height);
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
 	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
@@ -920,12 +975,26 @@ Sprite::Sprite(Texture *texture, ivec4 src, ivec4 dst)
 	this->dst = dst;
 }
 
+Sprite::Sprite(Texture *texture, ivec4 dst)
+: Drawable::Drawable(texture)
+{
+	this->src = {0, 0, texture->width, texture->height};
+	this->dst = dst;
+}
+
+Sprite::Sprite(Texture *texture)
+: Drawable::Drawable(texture)
+{
+	this->src = {0, 0, texture->width, texture->height};
+	this->dst = {0, 0, texture->width, texture->height};
+}
+
 #pragma endregion SPRITE
 
 #pragma region RENDER_TEXTURE
 
 RenderTexture::RenderTexture(unsigned int width, unsigned int height, Camera *camera)
-: Drawable::Drawable(new Texture(width, height))
+: Drawable::Drawable(new Texture(width, height, 1))
 {
 	// Camera
 	internalCamera = camera ? false : true;
@@ -949,7 +1018,7 @@ RenderTexture::~RenderTexture()
 #pragma region TEXT
 
 Text::Text(const char *text, Font *font, glm::vec2 pos, Color color)
-: Drawable::Drawable(new Texture(text, font)), font(font)
+: Drawable::Drawable(new Texture(text, font, 1)), font(font)
 {
 	this->text = new char[strlen(text) + 1];
 	strcpy(this->text, text);
@@ -978,7 +1047,7 @@ void Text::setText(const char *text)
 void Text::render()
 {
 	delete texture;
-	texture = new Texture(text, font);
+	texture = new Texture(text, font, 1);
 
 	src   = {0, 0, texture->width, texture->height};
 	dst.z = texture->width;

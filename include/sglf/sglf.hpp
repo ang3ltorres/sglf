@@ -232,7 +232,8 @@ namespace sglf
 		static void finalize();
 
 		static void getPixelDataPNG(const char *fileName, unsigned char *&buffer, unsigned int *width, unsigned int *height);
-		static void getPixelDataSVG(const char *fileName, unsigned char *&buffer, unsigned int widthDesired, unsigned int heightDesired);
+		static void getPixelDataSVGFixed(const char *fileName, unsigned char *&buffer, unsigned int widthDesired, unsigned int heightDesired);
+		static void getPixelDataSVGPercent(const char *fileName, unsigned char *&buffer, float percent, unsigned int *width, unsigned int *height);
 		static void getPixelDataFont(const char *text, Font *font, unsigned char *&buffer, unsigned int &width, unsigned int &height);
 
 		static IWICImagingFactory *wicFactory;
@@ -243,10 +244,11 @@ namespace sglf
 		static GLuint VBO;
 		static GLuint EBO;
 
-		Texture(const char *fileName, unsigned int maxInstances = 16);
-		Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances = 16);
-		Texture(unsigned int width, unsigned int height, unsigned int maxInstances = 1);
-		Texture(const char *text, Font *font, unsigned int maxInstances = 1);
+		Texture(const char *fileName, unsigned int maxInstances);
+		Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances);
+		Texture(const char *fileName, float percent, unsigned int maxInstances);
+		Texture(unsigned int width, unsigned int height, unsigned int maxInstances);
+		Texture(const char *text, Font *font, unsigned int maxInstances);
 		~Texture();
 
 		// Batch
@@ -286,6 +288,8 @@ namespace sglf
 	public:
 		Sprite(const Sprite&) = default;
 		Sprite(Texture *texture, glm::ivec4 src, glm::ivec4 dst);
+		Sprite(Texture *texture, glm::ivec4 dst);
+		Sprite(Texture *texture);
 		~Sprite() = default;
 	};
 
