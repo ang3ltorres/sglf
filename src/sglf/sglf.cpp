@@ -950,7 +950,14 @@ Drawable::Drawable(Texture *texture)
 
 void Drawable::updateModel()
 {
-	model = {translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f)) * rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f}) * scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))};
+	model =
+	{
+		translate(mat4(1.0f), vec3(dst.x, dst.y, 0.0f))
+			*
+		rotate(mat4(1.0f), radians(rotation), {0.0f, 0.0f, 1.0f})
+			*
+		scale(mat4(1.0f), vec3(dst.z, dst.w, 1.0f))
+	};
 }
 
 void Drawable::batch()
