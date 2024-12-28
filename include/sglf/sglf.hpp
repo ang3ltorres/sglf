@@ -1,10 +1,9 @@
 #pragma once
 
 // WINAPI
-#include <objidl.h>
+typedef unsigned long PROPID;
 #include <gdiplus.h>
 #include <windef.h>
-#include <winuser.h>
 #include <windef.h>
 #include <mmeapi.h>
 #include <dsound.h>

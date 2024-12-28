@@ -18,6 +18,6 @@ target_link_libraries(sglf PUBLIC plutosvg plutovg Vorbis::vorbisfile Vorbis::vo
 file(GLOB_RECURSE SOURCES_TEST CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/test/*.cpp")
 add_executable(test ${SOURCES_TEST})
 target_include_directories(test PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/test" "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_compile_options(sglf PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=1)
-target_compile_definitions(sglf PRIVATE WIN32_LEAN_AND_MEAN)
+target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -fmax-errors=1)
+target_compile_definitions(test PRIVATE WIN32_LEAN_AND_MEAN)
 target_link_libraries(test PRIVATE sglf)
