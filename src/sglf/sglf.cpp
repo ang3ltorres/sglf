@@ -369,19 +369,16 @@ Sound::Sound(const char *fileName)
 	}
 	buffer->Unlock(bufferData, totalRead, nullptr, 0);
 	ov_clear(&vorbisFile);
-	preload();
+
+	// Preload sound
+	buffer->Play(0, 0, 0);
+	buffer->Stop();
+	buffer->SetCurrentPosition(0);
 }
 
 Sound::~Sound()
 {
 	buffer->Release();
-}
-
-void Sound::preload()
-{
-	buffer->Play(0, 0, 0);
-	buffer->SetCurrentPosition(0);
-	buffer->Stop();
 }
 
 void Sound::play()

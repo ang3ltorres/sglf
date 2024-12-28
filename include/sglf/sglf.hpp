@@ -143,7 +143,6 @@ namespace sglf
 
 		Sound(const char *fileName);
 		~Sound();
-		void preload();
 		void play();
 		void setVolume(long volume);
 		void setPitch(unsigned int freq);
