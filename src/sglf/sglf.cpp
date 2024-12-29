@@ -1,21 +1,5 @@
 #include <sglf.hpp>
 
-// WINAPI
-#include <objbase.h>
-
-// STD
-#include <cstdio>
-
-// OGG VORBIS
-#include <ogg/ogg.h>
-#include <vorbis/vorbisfile.h>
-
-// GLM
-#include <glm/gtc/type_ptr.hpp>
-
-// PLUTOSVG
-#include <plutosvg.h>
-
 using namespace glm;
 using namespace sglf;
 
@@ -841,6 +825,7 @@ Texture::Texture(const char *fileName, unsigned int width, unsigned int height, 
 }
 
 Texture::Texture(const char *fileName, float percent, unsigned int maxInstances)
+: maxInstances(maxInstances), currentInstance(0)
 {
 	Texture::getPixelDataSVGPercent(fileName, pixelData, percent, &width, &height);
 

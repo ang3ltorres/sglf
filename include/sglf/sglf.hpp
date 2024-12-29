@@ -1,21 +1,6 @@
 #pragma once
 
-// WINAPI
-typedef unsigned long PROPID;
-#include <gdiplus.h>
-#include <windef.h>
-#include <windef.h>
-#include <mmeapi.h>
-#include <dsound.h>
-#include <wincodec.h>
-
-// OPENGL
-#include <GL/gl.h>
-#include <GL/wglext.h>
-#include <GL/glcorearb.h>
-
-// GLM
-#include <glm/glm.hpp>
+#include "pch.hpp"
 
 #pragma region // &WGL EXTENSIONNS
 
