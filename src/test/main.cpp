@@ -29,7 +29,7 @@ int main()
 	sglf::Sprite        *svgSprite     = new sglf::Sprite{svgTexture};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
 	sglf::Font          *font          = new sglf::Font{"Minecraft", 128/2, sglf::Font::Style::Regular, true};
-	sglf::Text          *text          = new sglf::Text{"Example text", font, {0, 0}, {255, 0, 0, 255}};
+	sglf::Text          *text          = new sglf::Text{"Example text", font, {0, 0}, {255, 0, 0}};
 
 	renderTexture->dst.z *= 1;
 	renderTexture->dst.w *= 1;
@@ -51,14 +51,14 @@ int main()
 
 		// Render to target
 		sglf::Graphics::setRenderTexture(renderTexture);
-		sglf::Graphics::clearScreen({255, 255, 255, 255});
+		sglf::Graphics::clearScreen({255, 255, 255});
 
 		pngSprite->batch();
 		pngSprite->texture->draw();
 
 		// Render to default "canvas"
 		sglf::Graphics::setRenderTexture();
-		sglf::Graphics::clearScreen({255, 143, 119, 255});
+		sglf::Graphics::clearScreen({255, 143, 119});
 		renderTexture->batch();
 		renderTexture->texture->draw();
 
