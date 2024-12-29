@@ -8,7 +8,6 @@
 typedef unsigned long PROPID;
 #include <gdiplus.h>
 #include <windef.h>
-#include <windef.h>
 #include <mmeapi.h>
 #include <dsound.h>
 #include <wincodec.h>
@@ -20,7 +19,6 @@ typedef unsigned long PROPID;
 #include <GL/glcorearb.h>
 
 // GLM
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 // OGG VORBIS

@@ -67,12 +67,10 @@ namespace sglf
 
 	struct Color
 	{
-		unsigned char r;
-		unsigned char g;
-		unsigned char b;
-		unsigned char a;
-
-		glm::vec4 getVec4() const;
+		unsigned char r = 255;
+		unsigned char g = 255;
+		unsigned char b = 255;
+		unsigned char a = 255;
 	};
 
 	class Window

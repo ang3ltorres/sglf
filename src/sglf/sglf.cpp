@@ -82,21 +82,10 @@ static const unsigned int indices[] =
 // *Deal with Windows UTF-16
 static wchar_t* toWideString(const char *string)
 {
-	if (!string)
-		return nullptr;
-
 	int bufferSize = MultiByteToWideChar(CP_UTF8, 0, string, -1, nullptr, 0);
-	if (bufferSize == 0)
-		return nullptr;
-
 	wchar_t *wideString = new wchar_t[bufferSize];
 	MultiByteToWideChar(CP_UTF8, 0, string, -1, wideString, bufferSize);
 	return wideString;
-}
-
-vec4 Color::getVec4() const
-{
-	return vec4({r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f});
 }
 
 #pragma endregion MISC
@@ -947,7 +936,7 @@ void Drawable::batch()
 	texture->SSBO_Data[texture->currentInstance++] =
 	{
 		{(float)src.x / (float)texture->width, (float)src.y / (float)texture->height, (float)src.z / (float)texture->width, (float)src.w / (float)texture->height},
-		{color.getVec4()},
+		{vec4{color.r, color.g, color.b, color.a}},
 		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{model},
 	};
@@ -1063,8 +1052,8 @@ float Graphics::delta;
 
 void Graphics::loadExtensionsWGL()
 {
-	HWND dummy = CreateWindowExW(
-		0, L"STATIC", L"DummyWindow", WS_OVERLAPPED,
+	HWND dummy = CreateWindowExA(
+		0, "STATIC", "DummyWindow", WS_OVERLAPPED,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr, nullptr, nullptr, nullptr);
 
@@ -1072,37 +1061,36 @@ void Graphics::loadExtensionsWGL()
 
 	PIXELFORMATDESCRIPTOR desc =
 	{
-		.nSize = sizeof(PIXELFORMATDESCRIPTOR),
-		.nVersion = 1,
-		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-		.iPixelType = PFD_TYPE_RGBA,
-		.cColorBits = 24,
-		.cRedBits = 0,
-		.cRedShift = 0,
-		.cGreenBits = 0,
-		.cGreenShift = 0,
-		.cBlueBits = 0,
-		.cBlueShift = 0,
-		.cAlphaBits = 0,
-		.cAlphaShift = 0,
-		.cAccumBits = 0,
-		.cAccumRedBits = 0,
+		.nSize           = sizeof(PIXELFORMATDESCRIPTOR),
+		.nVersion        = 1,
+		.dwFlags         = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		.iPixelType      = PFD_TYPE_RGBA,
+		.cColorBits      = 24,
+		.cRedBits        = 0,
+		.cRedShift       = 0,
+		.cGreenBits      = 0,
+		.cGreenShift     = 0,
+		.cBlueBits       = 0,
+		.cBlueShift      = 0,
+		.cAlphaBits      = 0,
+		.cAlphaShift     = 0,
+		.cAccumBits      = 0,
+		.cAccumRedBits   = 0,
 		.cAccumGreenBits = 0,
-		.cAccumBlueBits = 0,
+		.cAccumBlueBits  = 0,
 		.cAccumAlphaBits = 0,
-		.cDepthBits = 0,
-		.cStencilBits = 0,
-		.cAuxBuffers = 0,
-		.iLayerType = 0,
-		.bReserved = 0,
-		.dwLayerMask = 0,
-		.dwVisibleMask = 0,
-		.dwDamageMask = 0,
+		.cDepthBits      = 0,
+		.cStencilBits    = 0,
+		.cAuxBuffers     = 0,
+		.iLayerType      = 0,
+		.bReserved       = 0,
+		.dwLayerMask     = 0,
+		.dwVisibleMask   = 0,
+		.dwDamageMask    = 0,
 	};
 
 	int format = ChoosePixelFormat(dc, &desc);
 	DescribePixelFormat(dc, format, sizeof(PIXELFORMATDESCRIPTOR), &desc);
-
 	SetPixelFormat(dc, format, &desc);
 
 	HGLRC rc = wglCreateContext(dc);
@@ -1187,32 +1175,32 @@ void Graphics::initialize()
 
 	PIXELFORMATDESCRIPTOR desc =
 	{
-		.nSize = sizeof(PIXELFORMATDESCRIPTOR),
-		.nVersion = 1,
-		.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI | PFD_DOUBLEBUFFER,
-		.iPixelType = PFD_TYPE_RGBA,
-		.cColorBits = 24,
-		.cRedBits = 0,
-		.cRedShift = 0,
-		.cGreenBits = 0,
-		.cGreenShift = 0,
-		.cBlueBits = 0,
-		.cBlueShift = 0,
-		.cAlphaBits = 0,
-		.cAlphaShift = 0,
-		.cAccumBits = 0,
-		.cAccumRedBits = 0,
+		.nSize           = sizeof(PIXELFORMATDESCRIPTOR),
+		.nVersion        = 1,
+		.dwFlags         = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_SUPPORT_GDI | PFD_DOUBLEBUFFER,
+		.iPixelType      = PFD_TYPE_RGBA,
+		.cColorBits      = 24,
+		.cRedBits        = 0,
+		.cRedShift       = 0,
+		.cGreenBits      = 0,
+		.cGreenShift     = 0,
+		.cBlueBits       = 0,
+		.cBlueShift      = 0,
+		.cAlphaBits      = 0,
+		.cAlphaShift     = 0,
+		.cAccumBits      = 0,
+		.cAccumRedBits   = 0,
 		.cAccumGreenBits = 0,
-		.cAccumBlueBits = 0,
+		.cAccumBlueBits  = 0,
 		.cAccumAlphaBits = 0,
-		.cDepthBits = 0,
-		.cStencilBits = 0,
-		.cAuxBuffers = 0,
-		.iLayerType = 0,
-		.bReserved = 0,
-		.dwLayerMask = 0,
-		.dwVisibleMask = 0,
-		.dwDamageMask = 0,
+		.cDepthBits      = 0,
+		.cStencilBits    = 0,
+		.cAuxBuffers     = 0,
+		.iLayerType      = 0,
+		.bReserved       = 0,
+		.dwLayerMask     = 0,
+		.dwVisibleMask   = 0,
+		.dwDamageMask    = 0,
 	};
 
 	DescribePixelFormat(Graphics::dc, format, sizeof(PIXELFORMATDESCRIPTOR), &desc);
@@ -1240,17 +1228,17 @@ void Graphics::initialize()
 	wglSwapIntervalEXT(1);
 	glActiveTexture(GL_TEXTURE0);
 
-	Graphics::clearScreen({255, 255, 255, 255});
+	Graphics::clearScreen({255, 255, 255});
 
-	Graphics::currentShader = nullptr;
-	Graphics::currentVAO = 0;
+	Graphics::currentShader  = nullptr;
+	Graphics::currentVAO     = 0;
 	Graphics::currentTexture = 0;
-	Graphics::defaultCamera = new Camera(Window::width, Window::height);
-	Graphics::currentCamera = Graphics::defaultCamera;
+	Graphics::defaultCamera  = new Camera(Window::width, Window::height);
+	Graphics::currentCamera  = Graphics::defaultCamera;
 
 	QueryPerformanceFrequency(&Graphics::frequency);
 	QueryPerformanceCounter(&Graphics::lastFrameTime);
-	Graphics::fps = 0.0f;
+	Graphics::fps   = 0.0f;
 	Graphics::delta = 0.0f;
 }
 

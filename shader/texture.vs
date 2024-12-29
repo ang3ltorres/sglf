@@ -26,7 +26,7 @@ void main()
 {
 	S_CommonTexture vertex =  v_Data[gl_InstanceID];
 
-	f_TintColor = vertex.v_TintColor;
+	f_TintColor = vertex.v_TintColor / 255.0;
 	f_TexCoord  = vertex.v_Src.xy + aTexCoord * vertex.v_Src.zw;
 	gl_Position = vertex.v_ViewProjection * vertex.v_Model * vec4(aPos, 0.0, 1.0);
 	
