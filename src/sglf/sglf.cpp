@@ -1255,23 +1255,18 @@ void Graphics::clearScreen(const Color &color)
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Graphics::setViewport(unsigned int width, unsigned int height)
-{
-	glViewport(0, 0, width, height);
-}
-
 void Graphics::setRenderTexture(RenderTexture *renderTexture)
 {
 	if (renderTexture)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, renderTexture->FBO);
-		Graphics::setViewport(renderTexture->texture->width, renderTexture->texture->height);
+		glViewport(0, 0, renderTexture->texture->width, renderTexture->texture->height);
 		Graphics::currentCamera = renderTexture->camera;
 	}
 	else
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		Graphics::setViewport(Window::width, Window::height);
+		glViewport(0, 0, Window::width, Window::height);
 		Graphics::currentCamera = Graphics::defaultCamera;
 	}
 

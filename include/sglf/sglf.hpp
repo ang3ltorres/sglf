@@ -339,9 +339,6 @@ namespace sglf
 		static void setVAO(GLuint VAO);
 		static void setTexture(GLuint texture);
 		static void updateTime();
-
-		// Internal Methods
-		static void setViewport(unsigned int width, unsigned int height);
 	};
 
 	void initialize(int width, int height, const char *title, const char *fonts[] = nullptr);
