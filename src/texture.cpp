@@ -231,120 +231,73 @@ void Texture::getPixelDataFont(const char *text, Font *font, unsigned char *&buf
 	delete[] w_text;
 }
 
-Texture::Texture(const char *fileName, unsigned int maxInstances)
-: maxInstances(maxInstances), currentInstance(0)
+void Texture::createTextureBuffers(int textureType)
 {
-	Texture::getPixelDataPNG(fileName, pixelData, &width, &height);
-
+	// Texture
 	glCreateTextures(GL_TEXTURE_2D, 1, &id);
-	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+
+	if (textureType == 2)
+	{
+		glTextureStorage2D(id, 1, GL_R8, width, height);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, pixelData);
+	}
+	else
+	{
+		glTextureStorage2D(id, 1, GL_RGBA8, width, height);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
+	}
+
 	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	type = 0;
-	glCreateBuffers(1, &UBO);
-	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
-
+	// Buffer
 	glCreateBuffers(1, &SSBO);
 	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
 	SSBO_Data = new S_CommonTexture[maxInstances];
+
+	type = textureType;
+	glCreateBuffers(1, &UBO);
+	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
+}
+
+Texture::Texture(const char *fileName, unsigned int maxInstances)
+: maxInstances(maxInstances), currentInstance(0)
+{
+	Texture::getPixelDataPNG(fileName, pixelData, &width, &height);
+	createTextureBuffers(0);
 }
 
 Texture::Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances)
 : width(width), height(height), maxInstances(maxInstances), currentInstance(0)
 {
 	Texture::getPixelDataSVGFixed(fileName, pixelData, width, height);
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &id);
-	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	type = 0;
-	glCreateBuffers(1, &UBO);
-	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
-
-	glCreateBuffers(1, &SSBO);
-	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
-	SSBO_Data = new S_CommonTexture[maxInstances];
+	createTextureBuffers(0);
 }
 
 Texture::Texture(const char *fileName, float percent, unsigned int maxInstances)
 : maxInstances(maxInstances), currentInstance(0)
 {
 	Texture::getPixelDataSVGPercent(fileName, pixelData, percent, &width, &height);
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &id);
-	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	type = 0;
-	glCreateBuffers(1, &UBO);
-	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
-
-	glCreateBuffers(1, &SSBO);
-	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
-	SSBO_Data = new S_CommonTexture[maxInstances];
+	createTextureBuffers(0);
 }
 
 Texture::Texture(unsigned int width, unsigned int height, unsigned int maxInstances)
 : width(width), height(height), maxInstances(maxInstances), currentInstance(0)
 {
 	// *Create empty texture
-	unsigned char color[4] = { 0, 0, 0, 255 };
-	glCreateTextures(GL_TEXTURE_2D, 1, &id);
-	glTextureStorage2D(id, 1, GL_RGBA8, width, height);
-	glClearTexSubImage(id, 0, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	type = 1;
-	glCreateBuffers(1, &UBO);
-	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
-
-	glCreateBuffers(1, &SSBO);
-	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
-	SSBO_Data = new S_CommonTexture[maxInstances];
-
 	pixelData = nullptr;
+	createTextureBuffers(1);
 }
 
 Texture::Texture(const char *text, Font *font, unsigned int maxInstances)
 : maxInstances(maxInstances), currentInstance(0)
 {
 	Texture::getPixelDataFont(text, font, pixelData, width, height);
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &id);
-	glTextureStorage2D(id, 1, GL_R8, width, height);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Fix non multiple of 4 texture size
-	glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, pixelData);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	type = 2;
-	glCreateBuffers(1, &UBO);
-	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
-
-	glCreateBuffers(1, &SSBO);
-	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
-	SSBO_Data = new S_CommonTexture[maxInstances];
+	createTextureBuffers(2);
 }
 
 Texture::~Texture()

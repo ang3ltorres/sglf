@@ -24,7 +24,7 @@ int main()
 	sglf::Texture       *pngTexture    = new sglf::Texture{"D:/sglf_res/png_test.png", 1};
 	sglf::Sprite        *pngSprite     = new sglf::Sprite{pngTexture, {0, 0, 400, 300}, {0, 0, 400, 300}};
 	// sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 256, 256, 1};
-	sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 2.0f, 1};
+	sglf::Texture       *svgTexture    = new sglf::Texture{"D:/sglf_res/Ghostscript_Tiger.svg", 0.5f, 1};
 	sglf::Sprite        *svgSprite     = new sglf::Sprite{svgTexture};
 	sglf::Sound         *sound         = new sglf::Sound{"D:/sglf_res/coin.ogg"};
 	sglf::Font          *font          = new sglf::Font{"Minecraft", 128/2, sglf::Font::Style::Regular, true};
@@ -34,8 +34,8 @@ int main()
 	renderTexture->dst.w *= 1;
 	renderTexture->updateModel();
 
-	svgSprite->dst.x -= 200;
-	svgSprite->dst.y -= 200;
+	svgSprite->dst.x += 200;
+	svgSprite->dst.y += 200;
 	svgSprite->updateModel();
 
 	while (!sglf::Window::shouldClose())

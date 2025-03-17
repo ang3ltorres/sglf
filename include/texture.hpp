@@ -37,6 +37,9 @@ namespace sglf
 		static GLuint VAO;
 		static GLuint VBO;
 		static GLuint EBO;
+
+		// Constructor common
+		void createTextureBuffers(int textureType);
 	
 		Texture(const char *fileName, unsigned int maxInstances);
 		Texture(const char *fileName, unsigned int width, unsigned int height, unsigned int maxInstances);
