@@ -26,7 +26,6 @@ void Drawable::batch()
 	{
 		{(float)src.x / (float)texture->width, (float)src.y / (float)texture->height, (float)src.z / (float)texture->width, (float)src.w / (float)texture->height},
 		{vec4{color.r, color.g, color.b, color.a}},
-		{Graphics::currentCamera->getViewProjectionMatrix()},
 		{model},
 	};
 }

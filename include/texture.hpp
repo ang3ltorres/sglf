@@ -5,18 +5,23 @@
 #include "font.hpp"
 
 namespace sglf
-{
-	struct alignas(16) GPU_SSBO
-	{
-		glm::vec4 gpu_Src;
-		glm::vec4 gpu_TintColor;
-		glm::mat4 gpu_ViewProjection;
-		glm::mat4 gpu_Model;
-	};
-	
+{	
 	class Texture
 	{
 	public:
+
+		struct alignas(16) GPU_SSBO
+		{
+			glm::vec4 gpu_Src;
+			glm::vec4 gpu_TintColor;
+			glm::mat4 gpu_Model;
+		};
+
+		struct alignas(16) GPU_UBO
+		{
+			alignas(16) glm::mat4 gpu_ViewProjection;
+		};
+
 		GLuint id;
 		GLuint width;
 		GLuint height;
@@ -37,6 +42,8 @@ namespace sglf
 		static GLuint VAO;
 		static GLuint VBO;
 		static GLuint EBO;
+		static GLuint UBO_Shared;
+		static GPU_UBO UBO_Data;
 
 		// Constructor common
 		void createTextureBuffers(int textureType);
@@ -50,7 +57,7 @@ namespace sglf
 	
 		// Batch
 		GLuint UBO;
-		int type;
+		int gpu_TextureType;
 	
 		GLuint SSBO;
 		GPU_SSBO *SSBO_Data;

@@ -47,6 +47,7 @@ PFNGLVERTEXARRAYELEMENTBUFFERPROC glVertexArrayElementBuffer;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
 PFNGLDELETEBUFFERSPROC glDeleteBuffers;
 PFNGLNAMEDBUFFERDATAPROC glNamedBufferData;
+PFNGLNAMEDBUFFERSUBDATAPROC glNamedBufferSubData;
 PFNGLBUFFERSUBDATAPROC glBufferSubData;
 PFNGLBINDBUFFERBASEPROC glBindBufferBase;
 PFNGLCREATEFRAMEBUFFERSPROC glCreateFramebuffers;
@@ -160,6 +161,7 @@ void Graphics::loadExtensionsGL()
 	glDeleteVertexArrays          = (PFNGLDELETEVERTEXARRAYSPROC)          (void*)wglGetProcAddress("glDeleteVertexArrays");
 	glDeleteBuffers               = (PFNGLDELETEBUFFERSPROC)               (void*)wglGetProcAddress("glDeleteBuffers");
 	glNamedBufferData             = (PFNGLNAMEDBUFFERDATAPROC)             (void*)wglGetProcAddress("glNamedBufferData");
+	glNamedBufferSubData          = (PFNGLNAMEDBUFFERSUBDATAPROC)          (void*)wglGetProcAddress("glNamedBufferSubData");
 	glBufferSubData               = (PFNGLBUFFERSUBDATAPROC)               (void*)wglGetProcAddress("glBufferSubData");
 	glBindBufferBase              = (PFNGLBINDBUFFERBASEPROC)              (void*)wglGetProcAddress("glBindBufferBase");
 	glCreateFramebuffers          = (PFNGLCREATEFRAMEBUFFERSPROC)          (void*)wglGetProcAddress("glCreateFramebuffers");
@@ -290,6 +292,10 @@ void Graphics::setRenderTexture(RenderTexture *renderTexture)
 	}
 
 	Graphics::currentCamera->updateViewProjectionMatrix();
+
+	//? Submit camera data to GPU
+	Texture::UBO_Data.gpu_ViewProjection = Graphics::currentCamera->viewProjection;
+	glNamedBufferSubData(Texture::UBO_Shared, 0, sizeof(Texture::GPU_UBO), &Texture::UBO_Data);
 }
 
 void Graphics::setVAO(GLuint VAO)

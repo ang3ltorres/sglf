@@ -2,14 +2,14 @@
 
 in vec4 f_TintColor;
 in vec2 f_TexCoord;
-in flat int f_type;
+in flat int f_TextureType;
 layout(location = 0) out vec4 FragColor;
 
 layout(binding = 0) uniform sampler2D u_Texture;
 
 void main()
 {
-	switch (f_type)
+	switch (f_TextureType)
 	{
 		case 0:
 			FragColor = texture(u_Texture, f_TexCoord) * f_TintColor;

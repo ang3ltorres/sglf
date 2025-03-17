@@ -31,6 +31,8 @@ Shader *Texture::shader;
 GLuint Texture::VAO;
 GLuint Texture::VBO;
 GLuint Texture::EBO;
+GLuint Texture::UBO_Shared;
+Texture::GPU_UBO Texture::UBO_Data;
 
 void Texture::initialize()
 {
@@ -62,6 +64,11 @@ void Texture::initialize()
 	glVertexArrayAttribBinding(Texture::VAO, aTexCoord_location, vbufIndex);
 	glEnableVertexArrayAttrib(Texture::VAO, aTexCoord_location);
 
+	//! Fill camera buffer (UBO_Shared)
+	Texture::UBO_Data.gpu_ViewProjection = Graphics::currentCamera->viewProjection;
+	glCreateBuffers(1, &Texture::UBO_Shared);
+	glNamedBufferData(Texture::UBO_Shared, sizeof(Texture::GPU_UBO), &Texture::UBO_Data, GL_STREAM_DRAW);
+
 	CoCreateInstance
 	(
 		CLSID_WICImagingFactory,
@@ -75,6 +82,7 @@ void Texture::initialize()
 void Texture::finalize()
 {
 	Texture::wicFactory->Release();
+	glDeleteBuffers(1, &Texture::UBO_Shared);
 	glDeleteBuffers(1, &Texture::EBO);
 	glDeleteBuffers(1, &Texture::VBO);
 	glDeleteVertexArrays(1, &Texture::VAO);
@@ -259,9 +267,9 @@ void Texture::createTextureBuffers(int textureType)
 	glNamedBufferData(SSBO, sizeof(GPU_SSBO) * maxInstances, nullptr, GL_STREAM_DRAW);
 	SSBO_Data = new GPU_SSBO[maxInstances];
 
-	type = textureType;
+	gpu_TextureType = textureType;
 	glCreateBuffers(1, &UBO);
-	glNamedBufferData(UBO, sizeof(int), &type, GL_STREAM_DRAW);
+	glNamedBufferData(UBO, sizeof(int), &gpu_TextureType, GL_STREAM_DRAW);
 }
 
 Texture::Texture(const char *fileName, unsigned int maxInstances)
@@ -315,12 +323,12 @@ void Texture::draw()
 	Texture::shader->use();
 	Graphics::setVAO(Texture::VAO);
 	Graphics::setTexture(id);
-	
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
-	// glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(int), &type);
-	
+
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GPU_SSBO) * currentInstance, SSBO_Data);
+	
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, Texture::UBO_Shared);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, UBO);
 	
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, currentInstance);
 	currentInstance = 0;
