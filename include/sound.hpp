@@ -1,0 +1,27 @@
+#pragma once
+#include <pch.hpp>
+
+namespace sglf
+{
+	class Sound
+	{
+	public:
+		static void initialize();
+		static void finalize();
+
+		static LPDIRECTSOUND dsound;
+		static LPDIRECTSOUNDBUFFER primaryBuffer;
+		static WAVEFORMATEX waveFormat;
+		static DSBUFFERDESC primaryBufferDesc;
+
+		Sound(const char *fileName);
+		~Sound();
+		void play();
+		void setVolume(long volume);
+		void setPitch(unsigned int freq);
+		
+		LPDIRECTSOUNDBUFFER buffer;
+		unsigned long bufferSize;
+		char *bufferData;
+	};
+}

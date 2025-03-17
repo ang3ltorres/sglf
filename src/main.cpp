@@ -1,4 +1,4 @@
-#include <sglf/sglf.hpp>
+#include <sglf.hpp>
 
 static void resized(unsigned int width, unsigned int height)
 {
@@ -14,7 +14,6 @@ int main()
 	static const char *fonts[] =
 	{
 		"D:/sglf_res/Minecraft.ttf",
-		"D:/sglf_res/Magic Retro.ttf",
 		" ",
 	};
 	

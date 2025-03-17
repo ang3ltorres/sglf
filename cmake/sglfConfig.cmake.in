@@ -1,9 +1,0 @@
-@PACKAGE_INIT@
-
-include(CMakeFindDependencyMacro)
-
-find_dependency(Ogg CONFIG REQUIRED)
-find_dependency(Vorbis CONFIG REQUIRED)
-find_dependency(glm CONFIG REQUIRED)
-
-include("${CMAKE_CURRENT_LIST_DIR}/sglfTargets.cmake")
