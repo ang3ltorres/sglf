@@ -256,8 +256,8 @@ void Texture::createTextureBuffers(int textureType)
 
 	// Buffer
 	glCreateBuffers(1, &SSBO);
-	glNamedBufferData(SSBO, sizeof(S_CommonTexture) * maxInstances, nullptr, GL_STREAM_DRAW);
-	SSBO_Data = new S_CommonTexture[maxInstances];
+	glNamedBufferData(SSBO, sizeof(GPU_SSBO) * maxInstances, nullptr, GL_STREAM_DRAW);
+	SSBO_Data = new GPU_SSBO[maxInstances];
 
 	type = textureType;
 	glCreateBuffers(1, &UBO);
@@ -305,7 +305,7 @@ Texture::~Texture()
 	glDeleteBuffers(1, &UBO);
 	glDeleteBuffers(1, &SSBO);
 	glDeleteTextures(1, &id);
-	SSBO_Data = new S_CommonTexture[maxInstances];
+	SSBO_Data = new GPU_SSBO[maxInstances];
 	delete[] SSBO_Data;
 	delete[] pixelData;
 }
@@ -320,7 +320,7 @@ void Texture::draw()
 	// glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(int), &type);
 	
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(S_CommonTexture) * currentInstance, SSBO_Data);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GPU_SSBO) * currentInstance, SSBO_Data);
 	
 	glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, currentInstance);
 	currentInstance = 0;

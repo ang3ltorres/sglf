@@ -6,12 +6,12 @@
 
 namespace sglf
 {
-	struct alignas(16) S_CommonTexture
+	struct alignas(16) GPU_SSBO
 	{
-		glm::vec4 u_Src;
-		glm::vec4 u_TintColor;
-		glm::mat4 u_ViewProjection;
-		glm::mat4 u_Model;
+		glm::vec4 gpu_Src;
+		glm::vec4 gpu_TintColor;
+		glm::mat4 gpu_ViewProjection;
+		glm::mat4 gpu_Model;
 	};
 	
 	class Texture
@@ -53,7 +53,7 @@ namespace sglf
 		int type;
 	
 		GLuint SSBO;
-		S_CommonTexture *SSBO_Data;
+		GPU_SSBO *SSBO_Data;
 		unsigned int maxInstances;
 		unsigned int currentInstance;
 	
