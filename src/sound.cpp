@@ -34,7 +34,8 @@ void Sound::finalize()
 	Sound::dsound->Release();
 }
 
-Sound::Sound(const char *fileName)
+Sound::Sound(const char *fileName, bool loop)
+: loop(loop)
 {
 	OggVorbis_File vorbisFile;
 	ov_fopen(fileName, &vorbisFile);
@@ -80,7 +81,7 @@ Sound::~Sound()
 void Sound::play()
 {
 	buffer->SetCurrentPosition(0);
-	buffer->Play(0, 0, 0);
+	buffer->Play(0, 0, loop ? DSBPLAY_LOOPING : 0);
 }
 
 void Sound::setVolume(long volume)

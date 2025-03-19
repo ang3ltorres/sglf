@@ -14,7 +14,7 @@ namespace sglf
 		static WAVEFORMATEX waveFormat;
 		static DSBUFFERDESC primaryBufferDesc;
 
-		Sound(const char *fileName);
+		Sound(const char *fileName, bool loop = false);
 		~Sound();
 		void play();
 		void setVolume(long volume);
@@ -23,5 +23,6 @@ namespace sglf
 		LPDIRECTSOUNDBUFFER buffer;
 		unsigned long bufferSize;
 		char *bufferData;
+		bool loop;
 	};
 }
