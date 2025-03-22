@@ -6,9 +6,8 @@
 
 namespace sglf
 {
-	class RenderTexture : public Drawable
+	struct RenderTexture : public Drawable
 	{
-	public:
 		RenderTexture(unsigned int width, unsigned int height, Camera *camera = nullptr);
 		RenderTexture(const RenderTexture&) = delete;
 		~RenderTexture();

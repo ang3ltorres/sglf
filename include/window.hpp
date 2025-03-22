@@ -3,9 +3,8 @@
 
 namespace sglf
 {
-	class Window
+	struct Window
 	{
-	public:
 		Window() = delete;
 		Window(const Window&) = delete;
 		~Window() = default;

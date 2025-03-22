@@ -7,9 +7,8 @@
 
 namespace sglf
 {
-	class Text : public Drawable
+	struct Text : public Drawable
 	{
-	public:
 		Text(const char *text, Font *font, glm::vec2 pos, Color color = {0, 0, 0, 255});
 		Text(const Text&) = delete;
 		~Text();

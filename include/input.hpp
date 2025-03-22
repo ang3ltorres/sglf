@@ -3,9 +3,8 @@
 
 namespace sglf
 {
-	class Input
+	struct Input
 	{
-	public:
 		static bool up[3];
 		static bool down[3];
 		static bool left[3];

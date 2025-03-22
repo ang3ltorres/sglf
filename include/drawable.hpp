@@ -6,9 +6,8 @@
 
 namespace sglf
 {
-	class Drawable
+	struct Drawable
 	{
-	public:
 		Drawable(const Drawable&) = delete;
 		Drawable(Texture *texture);
 		~Drawable() = default;

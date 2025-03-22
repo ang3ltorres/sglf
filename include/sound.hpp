@@ -3,9 +3,8 @@
 
 namespace sglf
 {
-	class Sound
+	struct Sound
 	{
-	public:
 		static void initialize();
 		static void finalize();
 

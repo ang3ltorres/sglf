@@ -3,9 +3,8 @@
 
 namespace sglf
 {
-	class Shader
+	struct Shader
 	{
-	public:
 		Shader(const char *vertexShader, const char *fragmentShader);
 		~Shader();
 	

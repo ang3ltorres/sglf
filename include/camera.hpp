@@ -3,9 +3,8 @@
 
 namespace sglf
 {
-	class Camera
+	struct Camera
 	{
-	public:
 		glm::vec2 position;
 		float zoom;
 	

@@ -3,9 +3,8 @@
 
 namespace sglf
 {
-	class Font
+	struct Font
 	{
-	public:
 	
 		enum Style
 		{

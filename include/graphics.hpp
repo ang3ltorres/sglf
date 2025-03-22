@@ -62,9 +62,8 @@ extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 
 namespace sglf
 {
-	class Graphics
+	struct Graphics
 	{
-	public:
 		Graphics() = delete;
 		Graphics(const Graphics&) = delete;
 		~Graphics() = default;

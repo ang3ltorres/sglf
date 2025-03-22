@@ -6,9 +6,8 @@
 
 namespace sglf
 {	
-	class Texture
+	struct Texture
 	{
-	public:
 
 		struct alignas(16) GPU_SSBO
 		{
